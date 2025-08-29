@@ -1,0 +1,54 @@
+{
+  "expo": {
+    "name": "rn-recycle",
+    "slug": "rn-recycle",
+    "owner": "davidsuballa26",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.jpg",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": false,
+    "scheme": "rnrecycle",
+    "splash": { "image": "./assets/splash-icon.png", "resizeMode": "contain", "backgroundColor": "#F2E0AE" },
+    "ios": { 
+    "supportsTablet": true,
+    "bundleIdentifier": "com.nrecycle.app",
+    "associatedDomains": [
+      "applinks:auth.expo.io",
+      "applinks:localhost"
+    ],
+    "urlSchemes": [
+      "rnrecycle", 
+      "com.googleusercontent.apps.133381945167-idk9uosisedacpm8192d3b5imbn69uga",
+      "exp"
+    ]
+  },
+  "android": {
+    "package": "com.nrecycle.app",
+    "adaptiveIcon": { "foregroundImage": "./assets/adaptive-icon.png", "backgroundColor": "#ffffff" },
+    "urlSchemes": ["rnrecycle", "exp"]
+  },
+    "web": { "favicon": "./assets/icon.jpg" },
+    "plugins": ["expo-font"],
+    "extra": {
+      "GOOGLE_CLIENT_ID": "133381945167-qt7dskcg057peidkj9gum8s2ii1bn4kt.apps.googleusercontent.com",
+      "GOOGLE_WEB_CLIENT_ID": "133381945167-qt7dskcg057peidkj9gum8s2ii1bn4kt.apps.googleusercontent.com",
+      "GOOGLE_ANDROID_CLIENT_ID": "133381945167-u1enhp4lktd4ilcqs38lg3rtko99f6mh.apps.googleusercontent.com",
+      "GOOGLE_IOS_CLIENT_ID": "133381945167-idk9uosisedacpm8192d3b5imbn69uga.apps.googleusercontent.com",
+      "API_BASE": "https://recycle-app-98di.onrender.com",
+      "API_BASE_DEV": "https://recycle-app-98di.onrender.com",
+      "DETECTION_API_URL": "http://192.168.1.32:8000"
+    },
+    "hooks": {
+      "postPublish": [
+        {
+          "file": "sentry-expo/upload-sourcemaps",
+          "config": {
+            "organization": "UDM",
+            "project": "rn-recycle"
+          }
+        }
+      ]
+    }
+  }
+}
