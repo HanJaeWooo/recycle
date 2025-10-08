@@ -15,7 +15,8 @@
     "test": "echo 'No tests configured'",
     "lint": "echo 'No linting configured'",
     "db:migrate": "node migrate.js",
-    "db:setup": "node migrate.js",
+    "db:migrate:full": "node run-full-migration.js",
+    "db:setup": "node run-full-migration.js",
     "health": "curl http://localhost:4000/health || echo 'Server not running'",
     "test:db": "node test_connection.js"
   },
