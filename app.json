@@ -31,7 +31,7 @@
     "web": { "favicon": "./assets/icon.jpg" },
     "plugins": ["expo-font"],
     "extra": {
-      "GOOGLE_CLIENT_ID": "133381945167-qt7dskcg057peidkj9gum8s2ii1bn4kt.apps.googleusercontent.com",
+      "GOOGLE_CLIENT_ID": "133381945167-qt7dskcg057peidkj9gum8s2ii1bn4kt.apps.googleusercontent.com", 
       "GOOGLE_WEB_CLIENT_ID": "133381945167-qt7dskcg057peidkj9gum8s2ii1bn4kt.apps.googleusercontent.com",
       "GOOGLE_ANDROID_CLIENT_ID": "133381945167-u1enhp4lktd4ilcqs38lg3rtko99f6mh.apps.googleusercontent.com",
       "GOOGLE_IOS_CLIENT_ID": "133381945167-idk9uosisedacpm8192d3b5imbn69uga.apps.googleusercontent.com",
