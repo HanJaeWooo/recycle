@@ -1,0 +1,43 @@
+{
+  "name": "recycle-backend-api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "server.js",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "scripts": {
+    "start": "NODE_ENV=production node server.js",
+    "dev": "node --watch server.js",
+    "build": "echo 'No build step required'",
+    "test": "echo 'No tests configured'",
+    "lint": "echo 'No linting configured'",
+    "db:migrate": "node migrate.js",
+    "db:migrate:full": "node run-full-migration.js",
+    "db:setup": "node run-full-migration.js",
+    "health": "curl http://localhost:4000/health || echo 'Server not running'",
+    "test:db": "node test_connection.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "pg": "^8.11.5",
+    "cors": "^2.8.5",
+    "nodemailer": "^6.9.8"
+  },
+  "keywords": [
+    "nodejs",
+    "express",
+    "postgresql",
+    "oauth",
+    "recycling",
+    "api"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "description": "Backend API for Recycle Mobile App with PostgreSQL and Google OAuth"
+}
+
+

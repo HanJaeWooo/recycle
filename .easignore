@@ -1,0 +1,33 @@
+# Exclude backend and datasets from mobile build
+backend/Datasets/
+backend/__pycache__/
+backend/*.pt
+backend/*.py
+backend/api/
+
+# Exclude web files
+web/
+
+# Exclude public videos (should be served from server, not bundled)
+public/videos/
+
+# Exclude build artifacts
+*.apk
+*.aab
+android/app/build/
+android/.gradle/
+
+# Exclude IDE
+.vscode/
+.idea/
+
+# Exclude git
+.git/
+
+# Exclude node modules (will be reinstalled)
+node_modules/
+
+# Exclude temp files
+*.log
+.env
+.env.local

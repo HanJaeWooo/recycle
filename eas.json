@@ -1,0 +1,54 @@
+{
+  "cli": {
+    "version": ">= 13.0.0"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_BASE": "https://recycle-app-98di.onrender.com",
+        "EXPO_PUBLIC_ENVIRONMENT": "development"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_BASE": "https://recycle-app-98di.onrender.com",
+        "EXPO_PUBLIC_ENVIRONMENT": "preview"
+      },
+      "android": {
+        "buildType": "apk"
+      },
+      "ios": {
+        "simulator": false
+      }
+    },
+    "production": {
+      "env": {
+        "EXPO_PUBLIC_API_BASE": "https://recycle-app-98di.onrender.com",
+        "EXPO_PUBLIC_ENVIRONMENT": "production"
+      },
+      "android": {
+        "buildType": "app-bundle"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "android": {
+        "serviceAccountKeyPath": "../path/to/api-key.json",
+        "track": "internal"
+      },
+      "ios": {
+        "appleId": "your-apple-id@example.com",
+        "ascAppId": "1234567890",
+        "appleTeamId": "ABCD123456"
+      }
+    }
+  }
+}
+
+
+
+
