@@ -9,6 +9,3 @@ cmds = ["npm run build"]
 
 [start]
 cmd = "npm start"
-
-[variables]
-PORT = "8081"
