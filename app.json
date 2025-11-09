@@ -42,9 +42,9 @@
       "expo-font"
     ],
     "extra": {
-      "API_BASE": "https://recycle-app-98di.onrender.com",
-      "API_BASE_DEV": "https://recycle-app-98di.onrender.com",
-      "DETECTION_API_URL": "http://192.168.1.32:8000",
+      "API_BASE": "https://recycle-production-up.railway.app",
+      "API_BASE_DEV": "https://recycle-production-up.railway.app",
+      "DETECTION_API_URL": "https://recycle-production-up.railway.app",
       "YT_API_KEY": "AIzaSyDaLg8m91aMEFVpL-_Zm4ns22esl2Mn10k",
       "eas": {
         "projectId": "48a21728-513e-4e3d-9a9d-5007f87a4263"
