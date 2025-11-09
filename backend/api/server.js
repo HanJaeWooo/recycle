@@ -143,6 +143,16 @@ app.get('/health', async (req, res) => {
   }
 });
 
+// Test endpoint to verify app can reach backend
+app.get('/test', (req, res) => {
+  console.log('[test] App connectivity test - request received');
+  res.json({ 
+    ok: true, 
+    message: 'Backend is reachable',
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Environment info endpoint for debugging (development only)
 app.get('/info', (req, res) => {
   if (process.env.NODE_ENV === 'production') {
