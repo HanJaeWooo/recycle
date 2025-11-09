@@ -32,7 +32,7 @@ export function getDetectionApiUrl(): string {
 
 // Get main API base URL
 export function getApiBaseUrl(): string {
-  return process.env.EXPO_PUBLIC_API_BASE || 'https://recycle-production.up.railway.app';
+  return process.env.EXPO_PUBLIC_API_BASE || 'https://recycle-production-up.railway.app';
 }
 
 // Get YouTube API key

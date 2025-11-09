@@ -13,7 +13,7 @@ function getApiBase(): string {
   
   // Fallback URLs
   const fallbackUrls = [
-    'https://recycle-app-98di.onrender.com',
+    'https://recycle-production-up.railway.app',
     'http://localhost:4000',
     'http://192.168.1.32:4000'
   ];
@@ -32,7 +32,7 @@ function getApiBase(): string {
   const apiBase = envApiBase || 
                   constantsApiBase || 
                   fallbackUrls.find(url => url) || 
-                  'https://recycle-app-98di.onrender.com';
+                  'https://recycle-production-up.railway.app';
 
   console.log('Selected API Base URL:', apiBase);
   return apiBase;

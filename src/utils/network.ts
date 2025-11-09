@@ -30,7 +30,7 @@ export async function getLocalIpAddress() {
 }
 
 export async function getApiBaseUrl() {
-  const baseUrl = process.env.EXPO_PUBLIC_API_BASE || 'https://recycle-production.up.railway.app';
+  const baseUrl = process.env.EXPO_PUBLIC_API_BASE || 'https://recycle-production-up.railway.app';
   return baseUrl;
 }
 
