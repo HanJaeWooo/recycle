@@ -4,10 +4,8 @@ import path from 'path';
 import pkg from 'pg';
 import { sendPasswordResetEmail, verifyEmailConfig } from './emailService.js';
 
-// Determine the correct .env file based on environment
-const envFile = process.env.NODE_ENV === 'production' 
-  ? path.resolve(process.cwd(), '.env.production')
-  : path.resolve(process.cwd(), '.env');
+// Load .env file
+const envFile = path.resolve(process.cwd(), '.env');
 
 dotenv.config({ path: envFile });
 
