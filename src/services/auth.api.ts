@@ -30,27 +30,48 @@ function getApiBase(): string {
   return apiBase;
 }
 
-const API_BASE = getApiBase();
+// Make API_BASE dynamic to ensure it's read at runtime, not module load time
+function getAPI_BASE(): string {
+  return getApiBase();
+}
 
 async function request<T>(path: string, options: RequestInit): Promise<T> {
+  const API_BASE = getAPI_BASE();
+  const url = `${API_BASE}${path}`;
+  console.log('🔍 [AUTH] Making request to:', url);
+  console.log('🔍 [AUTH] Request options:', { method: options.method, headers: options.headers });
+  
   try {
-    const res = await fetch(`${API_BASE}${path}`, {
+    const res = await fetch(url, {
       headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
       ...options,
     });
     
+    console.log('🔍 [AUTH] Response status:', res.status);
+    
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
+      console.error('🔍 [AUTH] Error response:', { status: res.status, data });
       throw Object.assign(new Error('RequestFailed'), { status: res.status, data });
     }
     
-    return await res.json();
+    const result = await res.json();
+    console.log('🔍 [AUTH] Success response:', result);
+    return result;
   } catch (err: any) {
+    console.error('🔍 [AUTH] Catch block error:', {
+      message: err?.message,
+      status: err?.status,
+      code: err?.code,
+      name: err?.name,
+      stack: err?.stack?.split('\n')[0]
+    });
+    
     if (err?.status == null) {
       throw Object.assign(new Error('NetworkError'), { 
         code: 'network_error', 
         base: API_BASE,
-        message: `Unable to connect to ${API_BASE}. Check if the API server is running.` 
+        message: `Unable to connect to ${API_BASE}. Check if the API server is running. Error: ${err?.message}` 
       });
     }
     throw err;
@@ -89,6 +110,7 @@ export async function updateProfile(data: {
     throw new Error('No session token available');
   }
 
+  const API_BASE = getAPI_BASE();
   const res = await fetch(`${API_BASE}/auth/profile`, {
     method: 'PUT',
     headers: { 
@@ -122,6 +144,7 @@ export async function updateProfile(data: {
 }
 
 export async function changePassword(data: { currentPassword: string; newPassword: string }) {
+  const API_BASE = getAPI_BASE();
   const res = await fetch(`${API_BASE}/auth/change-password`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -151,6 +174,7 @@ export async function fetchProfile(userId: string): Promise<{
     throw new Error('No session token available');
   }
 
+  const API_BASE = getAPI_BASE();
   const res = await fetch(`${API_BASE}/auth/profile?userId=${userId}`, {
     method: 'GET',
     headers: { 
