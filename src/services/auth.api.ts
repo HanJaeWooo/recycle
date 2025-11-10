@@ -19,13 +19,24 @@ function getApiBase(): string {
     'Constants.expoConfig?.extra': Constants.expoConfig?.extra,
   });
   
-  // Try multiple sources for the API base
+  // For development/local testing, use localhost
+  // For production builds, use Railway URL
+  const isDevelopment = process.env.NODE_ENV === 'development' || __DEV__;
+  
+  if (isDevelopment) {
+    console.log('🔍 DEBUG - Development mode detected, using localhost');
+    return 'http://localhost:4000';
+  }
+  
+  // In production builds, process.env is not available
+  // Priority: Constants.expoConfig (from app.json) > process.env > fallback
   const apiBase = 
-    process.env.EXPO_PUBLIC_API_BASE || 
     Constants.expoConfig?.extra?.API_BASE ||
+    process.env.EXPO_PUBLIC_API_BASE || 
     'https://recycle-production-up.railway.app';
     
   console.log('🔍 DEBUG - Using API Base:', apiBase);
+  console.log('🔍 DEBUG - Constants.expoConfig?.extra:', Constants.expoConfig?.extra);
   
   return apiBase;
 }
@@ -42,10 +53,20 @@ async function request<T>(path: string, options: RequestInit): Promise<T> {
   console.log('🔍 [AUTH] Request options:', { method: options.method, headers: options.headers });
   
   try {
-    const res = await fetch(url, {
+    // For HTTPS URLs, we need to handle SSL certificate issues
+    // This is a workaround for self-signed or problematic certificates
+    const fetchOptions: RequestInit = {
       headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
       ...options,
-    });
+    };
+    
+    // Add timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+    fetchOptions.signal = controller.signal;
+    
+    const res = await fetch(url, fetchOptions);
+    clearTimeout(timeoutId);
     
     console.log('🔍 [AUTH] Response status:', res.status);
     

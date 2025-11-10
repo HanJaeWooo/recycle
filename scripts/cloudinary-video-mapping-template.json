@@ -1,0 +1,188 @@
+{
+  "instructions": "Fill in the Cloudinary URLs for each video. Get these from your Cloudinary Media Library console.",
+  "cloudName": "dahlpf7fr",
+  "videos": {
+    "bottle-caps-1": {
+      "title": "Cellphone Stand made from Bottle Caps",
+      "material": "Bottle caps",
+      "localPath": "/videos/BOTTLE CAPS/_Cellphone Stand made from Bottle Caps_.mp4",
+      "cloudinaryUrl": "",
+      "thumbnailUrl": ""
+    },
+    "bottle-caps-2": {
+      "title": "Coaster made from Bottle Caps",
+      "material": "Bottle caps",
+      "localPath": "/videos/BOTTLE CAPS/_Coaster made from Bottle Caps_.mp4",
+      "cloudinaryUrl": "",
+      "thumbnailUrl": ""
+    },
+    "cardboard-1": {
+      "title": "Cat Scratcher made from Cardboard",
+      "material": "Cardboard",
+      "localPath": "/videos/Cardboard Boxes/_Cat Scratcher made from Cardboard_.mp4",
+      "cloudinaryUrl": "",
+      "thumbnailUrl": ""
+    },
+    "cardboard-2": {
+      "title": "Clothes Folder made from Cardboard",
+      "material": "Cardboard",
+      "localPath": "/videos/Cardboard Boxes/_Clothes Folder made from Cardboard_.mp4",
+      "cloudinaryUrl": "",
+      "thumbnailUrl": ""
+    },
+    "chiffon-1": {
+      "title": "Ribbon Hair Tie made from Chiffon",
+      "material": "Chiffon",
+      "localPath": "/videos/Chiffon/_Ribbon Hair Tie made from Chiffon_.mp4",
+      "cloudinaryUrl": "",
+      "thumbnailUrl": ""
+    },
+    "chiffon-2": {
+      "title": "Wallet made from Chiffon",
+      "material": "Chiffon",
+      "localPath": "/videos/Chiffon/_Wallet made from Chiffon_.mp4",
+      "cloudinaryUrl": "",
+      "thumbnailUrl": ""
+    },
+    "copper-1": {
+      "title": "Rings made from Copper coil",
+      "material": "Coppers",
+      "localPath": "/videos/Copper/_Rings made from Copper coil_.mp4",
+      "cloudinaryUrl": "",
+      "thumbnailUrl": ""
+    },
+    "copper-2": {
+      "title": "Tree made from Copper",
+      "material": "Coppers",
+      "localPath": "/videos/Copper/_Tree made from Copper_.mp4",
+      "cloudinaryUrl": "",
+      "thumbnailUrl": ""
+    },
+    "corduroy-1": {
+      "title": "Bookmark made from Corduroy",
+      "material": "Corduroy",
+      "localPath": "/videos/Corduroy/_Bookmark made from Corduroy_.mp4",
+      "cloudinaryUrl": "",
+      "thumbnailUrl": ""
+    },
+    "corduroy-2": {
+      "title": "Square bookmark made from Corduroy",
+      "material": "Corduroy",
+      "localPath": "/videos/Corduroy/_Square bookmark made from Corduroy_.mp4",
+      "cloudinaryUrl": "",
+      "thumbnailUrl": ""
+    },
+    "cotton-1": {
+      "title": "Eye Glass pouch made from Cotton",
+      "material": "Cotton",
+      "localPath": "/videos/Cotton/_Eye Glass pouch made from Cotton_.mp4",
+      "cloudinaryUrl": "",
+      "thumbnailUrl": ""
+    },
+    "cotton-2": {
+      "title": "Scissor Pouch made from Cotton",
+      "material": "Cotton",
+      "localPath": "/videos/Cotton/_Scissor Pouch made from Cotton_.mp4",
+      "cloudinaryUrl": "",
+      "thumbnailUrl": ""
+    },
+    "hanger-1": {
+      "title": "Book Holder made from Hanger",
+      "material": "Hangers",
+      "localPath": "/videos/HANGER/_Book Holder made from Hanger_.mp4",
+      "cloudinaryUrl": "",
+      "thumbnailUrl": ""
+    },
+    "hanger-2": {
+      "title": "Shoe Organizer made from Hanger",
+      "material": "Hangers",
+      "localPath": "/videos/HANGER/_Shoe Organizer made from Hanger_.mp4",
+      "cloudinaryUrl": "",
+      "thumbnailUrl": ""
+    },
+    "metal-can-1": {
+      "title": "Candle Holder made from Metal Can",
+      "material": "Metal cans",
+      "localPath": "/videos/Metal Can/_Candle Holder made from Metal Can_.mp4",
+      "cloudinaryUrl": "https://res.cloudinary.com/dahlpf7fr/video/upload/v1762350365/_Candle_Holder_made_from_Metal_Can__gw1jln.mp4",
+      "thumbnailUrl": ""
+    },
+    "metal-can-2": {
+      "title": "Mini stove made from Metal Can",
+      "material": "Metal cans",
+      "localPath": "/videos/Metal Can/_Mini stove made from Metal Can_.mp4",
+      "cloudinaryUrl": "",
+      "thumbnailUrl": ""
+    },
+    "plastic-bottle-1": {
+      "title": "Flower made from Plastic Bottle",
+      "material": "Plastic bottle",
+      "localPath": "/videos/Plastic Bottles/_Flower made from Plastic Bottle_.mp4",
+      "cloudinaryUrl": "",
+      "thumbnailUrl": ""
+    },
+    "plastic-bottle-2": {
+      "title": "PAROL made from Plastic Bottle",
+      "material": "Plastic bottle",
+      "localPath": "/videos/Plastic Bottles/_PAROL made from Plastic Bottle_.mp4",
+      "cloudinaryUrl": "",
+      "thumbnailUrl": ""
+    },
+    "plastic-cup-1": {
+      "title": "Mini Basket made from Plastic Cup",
+      "material": "Cups",
+      "localPath": "/videos/Plastic Cups/_Mini Basket made from Plastic Cup_.mp4",
+      "cloudinaryUrl": "",
+      "thumbnailUrl": ""
+    },
+    "plastic-cup-2": {
+      "title": "Mini dustbin made from Plastic Cup",
+      "material": "Cups",
+      "localPath": "/videos/Plastic Cups/_Mini dustbin made from Plastic Cup_.mp4",
+      "cloudinaryUrl": "",
+      "thumbnailUrl": ""
+    },
+    "utensils-1": {
+      "title": "Flower Vase made from Utensils",
+      "material": "Utensils",
+      "localPath": "/videos/Utensils/_Flower Vase made from Utensils_.mp4",
+      "cloudinaryUrl": "",
+      "thumbnailUrl": ""
+    },
+    "utensils-2": {
+      "title": "Wall Decor made from Utensils",
+      "material": "Utensils",
+      "localPath": "/videos/Utensils/_Wall Decor made from Utensils_.mp4",
+      "cloudinaryUrl": "",
+      "thumbnailUrl": ""
+    },
+    "wood-1": {
+      "title": "Book Shelf made from Wood",
+      "material": "Woods",
+      "localPath": "/videos/Wood/_Book Shelf made from Wood_.mp4",
+      "cloudinaryUrl": "",
+      "thumbnailUrl": ""
+    },
+    "wood-2": {
+      "title": "Wall Mounted Organizer made from Wood",
+      "material": "Woods",
+      "localPath": "/videos/Wood/_Wall Mounted Organizer made from Wood_.mp4",
+      "cloudinaryUrl": "",
+      "thumbnailUrl": ""
+    },
+    "denim-1": {
+      "title": "Pocket purses made from Denim",
+      "material": "Denim",
+      "localPath": "/videos/denim/Pocket purses.mp4",
+      "cloudinaryUrl": "",
+      "thumbnailUrl": ""
+    },
+    "denim-2": {
+      "title": "Pot holder made from Denim",
+      "material": "Denim",
+      "localPath": "/videos/denim/Pot holder.mp4",
+      "cloudinaryUrl": "",
+      "thumbnailUrl": ""
+    }
+  }
+}
