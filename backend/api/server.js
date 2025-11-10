@@ -94,14 +94,16 @@ pool.on('error', (err) => {
   }
 });
 
-// Test database connection on startup
-pool.query('SELECT NOW()', (err, result) => {
-  if (err) {
-    console.error('[pg] Initial connection test failed:', err.message);
-  } else {
-    console.log('[pg] Database connection test successful at:', result.rows[0].now);
-  }
-});
+// Test database connection on startup (non-blocking)
+setTimeout(() => {
+  pool.query('SELECT NOW()', (err, result) => {
+    if (err) {
+      console.error('[pg] Initial connection test failed:', err.message);
+    } else {
+      console.log('[pg] Database connection test successful at:', result.rows[0].now);
+    }
+  });
+}, 1000);
 
 // Verify email configuration on startup
 verifyEmailConfig().then(isConfigured => {
