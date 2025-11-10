@@ -169,17 +169,22 @@ app.get('/info', (req, res) => {
 
 // Register user
 app.post('/auth/register', async (req, res) => {
+  console.log('[register] Request received:', { body: req.body });
   const { email, username, fullName, password, acceptTerms, acceptPrivacy } = req.body || {};
   if (!email || !username || !password) {
+    console.log('[register] Missing fields');
     return res.status(400).json({ error: 'missing_fields' });
   }
   try {
+    console.log('[register] Calling auth.register_user');
     const { rows } = await pool.query(
       'SELECT auth.register_user($1::citext, $2::citext, $3::text, $4::text, $5::boolean, $6::boolean) AS user_id',
       [email, username, fullName || null, password, !!acceptTerms, !!acceptPrivacy]
     );
+    console.log('[register] Success:', { userId: rows[0]?.user_id });
     return res.status(201).json({ userId: rows[0]?.user_id });
   } catch (err) {
+    console.error('[register] Database error:', { code: err?.code, message: err?.message, detail: err?.detail });
     if (err?.code === '23505') {
       // unique_violation
       if (String(err?.detail || '').includes('email')) {
@@ -190,7 +195,6 @@ app.post('/auth/register', async (req, res) => {
       }
       return res.status(409).json({ error: 'conflict' });
     }
-    console.error('[register] error', err);
     return res.status(500).json({ error: 'server_error' });
   }
 });
