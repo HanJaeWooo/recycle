@@ -197,24 +197,20 @@ app.post('/auth/register', async (req, res) => {
 
 // Login and create session
 app.post('/auth/login', async (req, res) => {
-  console.log('[login] Request received:', { 
-    body: req.body,
-    headers: req.headers,
-    ip: req.ip 
-  });
+  console.log('[login] Request received');
   
   const { identifier, password } = req.body || {};
   if (!identifier || !password) {
-    console.log('[login] Missing fields:', { identifier: !!identifier, password: !!password });
+    console.log('[login] Missing fields');
     return res.status(400).json({ error: 'missing_fields' });
   }
   try {
-    console.log('[login] Attempting authentication for:', identifier);
+    console.log('[login] Attempting authentication');
     // Authenticate user and get user ID
     const authRes = await pool.query('SELECT auth.authenticate_user($1::text, $2::text) AS user_id', [identifier, password]);
     const userId = authRes.rows?.[0]?.user_id;
     
-    console.log('[login] Authentication result:', { userId: !!userId, userId });
+    console.log('[login] Authentication result:', { hasUserId: !!userId });
     
     if (!userId) {
       return res.status(401).json({ error: 'invalid_credentials' });
