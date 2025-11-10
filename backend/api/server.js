@@ -813,6 +813,12 @@ app.delete('/inventory', validateSession, async (req, res) => {
   }
 });
 
+// Catch-all 404 handler to log unmatched routes
+app.use((req, res) => {
+  console.error('[404] Unmatched route:', { method: req.method, path: req.path, url: req.url });
+  res.status(404).json({ error: 'not_found', path: req.path });
+});
+
 const host = process.env.HOST || '0.0.0.0';
 const port = Number(process.env.PORT || 4000);
 app.listen(port, host, () => {
