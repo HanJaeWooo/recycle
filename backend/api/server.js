@@ -16,6 +16,12 @@ const { Pool } = pkg;
 
 const app = express();
 
+// Request logging middleware
+app.use((req, res, next) => {
+  console.log('[REQUEST] Incoming:', { method: req.method, path: req.path, url: req.url, headers: req.headers });
+  next();
+});
+
 // Simple CORS configuration - allow all origins  
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
