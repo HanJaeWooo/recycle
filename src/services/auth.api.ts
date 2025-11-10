@@ -19,14 +19,8 @@ function getApiBase(): string {
     'Constants.expoConfig?.extra': Constants.expoConfig?.extra,
   });
   
-  // For development/local testing, use localhost
-  // For production builds, use Railway URL
-  const isDevelopment = process.env.NODE_ENV === 'development' || __DEV__;
-  
-  if (isDevelopment) {
-    console.log('🔍 DEBUG - Development mode detected, using localhost');
-    return 'http://localhost:4000';
-  }
+  // Always use Railway backend for both development and production
+  console.log('🔍 DEBUG - Using Railway backend for all environments');
   
   // In production builds, process.env is not available
   // Priority: Constants.expoConfig (from app.json) > process.env > fallback
