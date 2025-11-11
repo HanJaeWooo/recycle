@@ -110,17 +110,18 @@ setTimeout(() => {
 async function runMigrationsOnStartup() {
   try {
     console.log('[Migration] Checking if migrations are needed...');
+    console.log('[Migration] Current working directory:', process.cwd());
     
     const migrations = [
-      { file: '../sql/001_auth_schema.sql', name: 'Auth Schema' },
-      { file: '../sql/002_scan_history_schema.sql', name: 'Scan History Schema' },
-      { file: '../sql/003_inventory_schema.sql', name: 'Inventory Schema' }
+      { file: '../../sql/001_auth_schema.sql', name: 'Auth Schema' },
+      { file: '../../sql/002_scan_history_schema.sql', name: 'Scan History Schema' },
+      { file: '../../sql/003_inventory_schema.sql', name: 'Inventory Schema' }
     ];
 
     for (const migration of migrations) {
       try {
         const migrationPath = path.resolve(process.cwd(), migration.file);
-        console.log(`[Migration] Reading ${migration.name}...`);
+        console.log(`[Migration] Reading ${migration.name} from: ${migrationPath}`);
         
         const migrationSQL = await fs.readFile(migrationPath, 'utf8');
         
