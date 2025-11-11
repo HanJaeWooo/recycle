@@ -9,6 +9,9 @@ import { sendPasswordResetEmail, verifyEmailConfig } from './emailService.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+console.log('[STARTUP] __filename:', __filename);
+console.log('[STARTUP] __dirname:', __dirname);
+
 // Load .env file
 const envFile = path.resolve(process.cwd(), '.env');
 
@@ -118,6 +121,7 @@ async function runMigrationsOnStartup() {
     console.log('[Migration] Process CWD:', process.cwd());
     
     // Try to find the sql directory
+    // __dirname is /app/backend/api, so we need to go up to /app/backend/sql
     const sqlDir = path.resolve(__dirname, '../sql');
     console.log('[Migration] Looking for SQL files in:', sqlDir);
     
@@ -126,6 +130,7 @@ async function runMigrationsOnStartup() {
       console.log('[Migration] Found SQL files:', files);
     } catch (err) {
       console.error('[Migration] Cannot read SQL directory:', err.message);
+      console.log('[Migration] Trying alternative path: /app/backend/sql');
     }
     
     const migrations = [
