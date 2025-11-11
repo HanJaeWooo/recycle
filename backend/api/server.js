@@ -120,28 +120,41 @@ async function runMigrationsOnStartup() {
     console.log('[Migration] Script directory (__dirname):', __dirname);
     console.log('[Migration] Process CWD:', process.cwd());
     
-    // Try to find the sql directory
-    // __dirname is /app/backend/api, so we need to go up to /app/backend/sql
-    const sqlDir = path.resolve(__dirname, '../sql');
-    console.log('[Migration] Looking for SQL files in:', sqlDir);
+    // Try multiple possible locations for SQL files
+    const possiblePaths = [
+      path.resolve(__dirname, '../sql'),           // If server.js is in /app/backend/api
+      path.resolve(__dirname, 'backend/sql'),      // If server.js is in /app
+      path.resolve(__dirname, '../backend/sql'),   // If server.js is in /app/api
+      '/app/backend/sql',                          // Absolute path
+      '/app/sql'                                   // Alternative absolute path
+    ];
     
-    try {
-      const files = await fs.readdir(sqlDir);
-      console.log('[Migration] Found SQL files:', files);
-    } catch (err) {
-      console.error('[Migration] Cannot read SQL directory:', err.message);
-      console.log('[Migration] Trying alternative path: /app/backend/sql');
+    let sqlDir = null;
+    for (const possiblePath of possiblePaths) {
+      try {
+        const files = await fs.readdir(possiblePath);
+        console.log(`[Migration] Found SQL files in ${possiblePath}:`, files);
+        sqlDir = possiblePath;
+        break;
+      } catch (err) {
+        console.log(`[Migration] SQL not found in ${possiblePath}`);
+      }
+    }
+    
+    if (!sqlDir) {
+      console.error('[Migration] Could not find SQL directory in any expected location');
+      return;
     }
     
     const migrations = [
-      { file: '../sql/001_auth_schema.sql', name: 'Auth Schema' },
-      { file: '../sql/002_scan_history_schema.sql', name: 'Scan History Schema' },
-      { file: '../sql/003_inventory_schema.sql', name: 'Inventory Schema' }
+      { file: '001_auth_schema.sql', name: 'Auth Schema' },
+      { file: '002_scan_history_schema.sql', name: 'Scan History Schema' },
+      { file: '003_inventory_schema.sql', name: 'Inventory Schema' }
     ];
 
     for (const migration of migrations) {
       try {
-        const migrationPath = path.resolve(__dirname, migration.file);
+        const migrationPath = path.resolve(sqlDir, migration.file);
         console.log(`[Migration] Reading ${migration.name} from: ${migrationPath}`);
         
         const migrationSQL = await fs.readFile(migrationPath, 'utf8');
