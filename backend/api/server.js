@@ -2,6 +2,7 @@ import express from 'express';
 import dotenv from 'dotenv';
 import path from 'path';
 import pkg from 'pg';
+import fs from 'fs/promises';
 import { sendPasswordResetEmail, verifyEmailConfig } from './emailService.js';
 
 // Load .env file
@@ -104,6 +105,45 @@ setTimeout(() => {
     }
   });
 }, 1000);
+
+// Auto-run migrations on startup
+async function runMigrationsOnStartup() {
+  try {
+    console.log('[Migration] Checking if migrations are needed...');
+    
+    const migrations = [
+      { file: '../sql/001_auth_schema.sql', name: 'Auth Schema' },
+      { file: '../sql/002_scan_history_schema.sql', name: 'Scan History Schema' },
+      { file: '../sql/003_inventory_schema.sql', name: 'Inventory Schema' }
+    ];
+
+    for (const migration of migrations) {
+      try {
+        const migrationPath = path.resolve(process.cwd(), migration.file);
+        console.log(`[Migration] Reading ${migration.name}...`);
+        
+        const migrationSQL = await fs.readFile(migrationPath, 'utf8');
+        
+        console.log(`[Migration] Applying ${migration.name}...`);
+        await pool.query(migrationSQL);
+        
+        console.log(`[Migration] ✓ ${migration.name} applied successfully`);
+      } catch (error) {
+        console.error(`[Migration] ✗ Error with ${migration.name}:`, error.message);
+        // Continue with next migration
+      }
+    }
+    
+    console.log('[Migration] Migration check completed');
+  } catch (error) {
+    console.error('[Migration] Fatal error during migrations:', error.message);
+  }
+}
+
+// Run migrations after a short delay to ensure DB connection is ready
+setTimeout(() => {
+  runMigrationsOnStartup();
+}, 2000);
 
 // Verify email configuration on startup
 verifyEmailConfig().then(isConfigured => {
