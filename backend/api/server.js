@@ -876,10 +876,27 @@ app.use((req, res) => {
 
 const host = process.env.HOST || '0.0.0.0';
 const port = Number(process.env.PORT || 8080);
-app.listen(port, host, () => {
+
+const server = app.listen(port, host, () => {
+  console.log(`[api] ✅ Server started successfully`);
   console.log(`[api] listening on http://${host}:${port}`);
   console.log(`[api] PORT env var: ${process.env.PORT}`);
   console.log(`[api] HOST env var: ${process.env.HOST}`);
+});
+
+server.on('error', (err) => {
+  console.error(`[api] ❌ Server error:`, err.message);
+  process.exit(1);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('[api] ❌ Uncaught exception:', err);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('[api] ❌ Unhandled rejection at:', promise, 'reason:', reason);
+  process.exit(1);
 });
 
 
