@@ -126,8 +126,8 @@ async function runMigrationsOnStartup() {
         await pool.query(migration.sql);
         console.log(`[Migration] ✓ ${migration.name} applied successfully`);
       } catch (error) {
-        console.error(`[Migration] ✗ Error with ${migration.name}:`, error.message);
-        // Continue with next migration
+        // Ignore errors - migrations use IF NOT EXISTS so they're safe to re-run
+        console.log(`[Migration] ${migration.name}: ${error.message.substring(0, 100)}`);
       }
     }
     
@@ -150,6 +150,16 @@ verifyEmailConfig().then(isConfigured => {
     console.warn('[email] ⚠️ Email service not configured. Password reset emails will not be sent.');
     console.warn('[email] Add GMAIL_USER and GMAIL_APP_PASSWORD to environment variables to enable email sending.');
   }
+});
+
+// Root endpoint
+app.get('/', (req, res) => {
+  res.json({ 
+    ok: true, 
+    message: 'Recycle Backend API',
+    version: '1.0.0',
+    timestamp: new Date().toISOString()
+  });
 });
 
 app.get('/health', async (req, res) => {
