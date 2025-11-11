@@ -40,17 +40,30 @@ app.use((req, res, next) => {
 
 // CORS configuration - allow all origins
 const corsOptions = {
-  origin: '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  origin: function (origin, callback) {
+    // Allow all origins including undefined (for mobile apps, curl, etc)
+    callback(null, true);
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH', 'HEAD'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
   credentials: false,
-  maxAge: 86400
+  maxAge: 86400,
+  preflightContinue: false
 };
 
 app.use(cors(corsOptions));
 
 // Explicitly handle OPTIONS for preflight
 app.options('*', cors(corsOptions));
+
+// Additional CORS headers to override Railway proxy
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+  res.setHeader('Access-Control-Max-Age', '86400');
+  next();
+});
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
