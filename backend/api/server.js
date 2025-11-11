@@ -4,6 +4,7 @@ import path from 'path';
 import pkg from 'pg';
 import fs from 'fs/promises';
 import { fileURLToPath } from 'url';
+import cors from 'cors';
 import { sendPasswordResetEmail, verifyEmailConfig } from './emailService.js';
 import { migrations } from './migrations.js';
 
@@ -33,25 +34,24 @@ const app = express();
 
 // Request logging middleware
 app.use((req, res, next) => {
-  console.log('[REQUEST] Incoming:', { method: req.method, path: req.path, url: req.url, headers: req.headers });
+  console.log('[REQUEST] Incoming:', { method: req.method, path: req.path, url: req.url });
   next();
 });
 
-// Simple CORS configuration - allow all origins  
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
-  
-  // Handle preflight requests
-  if (req.method === 'OPTIONS') {
-    console.log('[CORS] OPTIONS preflight for:', req.path);
-    res.status(200).end();
-    return;
-  }
-  
-  next();
-});
+// CORS configuration - allow all origins
+const corsOptions = {
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  credentials: false,
+  maxAge: 86400
+};
+
+app.use(cors(corsOptions));
+
+// Explicitly handle OPTIONS for preflight
+app.options('*', cors(corsOptions));
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
