@@ -5,6 +5,7 @@ import pkg from 'pg';
 import fs from 'fs/promises';
 import { fileURLToPath } from 'url';
 import { sendPasswordResetEmail, verifyEmailConfig } from './emailService.js';
+import { migrations } from './migrations.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -113,55 +114,16 @@ setTimeout(() => {
   });
 }, 1000);
 
-// Auto-run migrations on startup
+// Auto-run migrations on startup (using embedded SQL)
 async function runMigrationsOnStartup() {
   try {
     console.log('[Migration] Checking if migrations are needed...');
-    console.log('[Migration] Script directory (__dirname):', __dirname);
-    console.log('[Migration] Process CWD:', process.cwd());
-    
-    // Try multiple possible locations for SQL files
-    const possiblePaths = [
-      path.resolve(__dirname, '../sql'),           // If server.js is in /app/backend/api
-      path.resolve(__dirname, 'backend/sql'),      // If server.js is in /app
-      path.resolve(__dirname, '../backend/sql'),   // If server.js is in /app/api
-      '/app/backend/sql',                          // Absolute path
-      '/app/sql'                                   // Alternative absolute path
-    ];
-    
-    let sqlDir = null;
-    for (const possiblePath of possiblePaths) {
-      try {
-        const files = await fs.readdir(possiblePath);
-        console.log(`[Migration] Found SQL files in ${possiblePath}:`, files);
-        sqlDir = possiblePath;
-        break;
-      } catch (err) {
-        console.log(`[Migration] SQL not found in ${possiblePath}`);
-      }
-    }
-    
-    if (!sqlDir) {
-      console.error('[Migration] Could not find SQL directory in any expected location');
-      return;
-    }
-    
-    const migrations = [
-      { file: '001_auth_schema.sql', name: 'Auth Schema' },
-      { file: '002_scan_history_schema.sql', name: 'Scan History Schema' },
-      { file: '003_inventory_schema.sql', name: 'Inventory Schema' }
-    ];
+    console.log(`[Migration] Found ${migrations.length} migrations to apply`);
 
     for (const migration of migrations) {
       try {
-        const migrationPath = path.resolve(sqlDir, migration.file);
-        console.log(`[Migration] Reading ${migration.name} from: ${migrationPath}`);
-        
-        const migrationSQL = await fs.readFile(migrationPath, 'utf8');
-        
         console.log(`[Migration] Applying ${migration.name}...`);
-        await pool.query(migrationSQL);
-        
+        await pool.query(migration.sql);
         console.log(`[Migration] ✓ ${migration.name} applied successfully`);
       } catch (error) {
         console.error(`[Migration] ✗ Error with ${migration.name}:`, error.message);
