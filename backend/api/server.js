@@ -875,9 +875,11 @@ app.use((req, res) => {
 });
 
 const host = process.env.HOST || '0.0.0.0';
-const port = Number(process.env.PORT || 4000);
+const port = Number(process.env.PORT || 8080);
 app.listen(port, host, () => {
   console.log(`[api] listening on http://${host}:${port}`);
+  console.log(`[api] PORT env var: ${process.env.PORT}`);
+  console.log(`[api] HOST env var: ${process.env.HOST}`);
 });
 
 
