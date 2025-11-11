@@ -12,14 +12,20 @@ const __dirname = path.dirname(__filename);
 
 console.log('[STARTUP] __filename:', __filename);
 console.log('[STARTUP] __dirname:', __dirname);
+console.log('[STARTUP] Process started at:', new Date().toISOString());
 
 // Load .env file
 const envFile = path.resolve(process.cwd(), '.env');
 
-dotenv.config({ path: envFile });
+try {
+  dotenv.config({ path: envFile });
+  console.log('[ENV] ✓ Loaded configuration from:', envFile);
+} catch (err) {
+  console.warn('[ENV] ⚠️ Could not load .env file:', err.message);
+}
 
-console.log('[ENV] Loading configuration from:', envFile);
 console.log('[ENV] Current environment:', process.env.NODE_ENV || 'development');
+console.log('[ENV] DATABASE_URL set:', !!process.env.DATABASE_URL);
 
 const { Pool } = pkg;
 
@@ -82,7 +88,16 @@ const getDatabaseConfig = () => {
   };
 };
 
-const pool = new Pool(getDatabaseConfig());
+let pool;
+try {
+  const dbConfig = getDatabaseConfig();
+  console.log('[DB] Creating connection pool...');
+  pool = new Pool(dbConfig);
+  console.log('[DB] ✓ Pool created successfully');
+} catch (err) {
+  console.error('[DB] ❌ Failed to create pool:', err.message);
+  process.exit(1);
+}
 
 // Enhanced database connection logging
 pool.on('connect', () => {
@@ -90,7 +105,7 @@ pool.on('connect', () => {
 });
 
 pool.on('error', (err) => {
-  console.error('[pg pool error]', err);
+  console.error('[pg pool error]', err.message);
   
   // Log connection details for debugging (without sensitive info)
   if (process.env.NODE_ENV !== 'production') {
