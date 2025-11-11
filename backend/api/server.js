@@ -115,6 +115,18 @@ async function runMigrationsOnStartup() {
   try {
     console.log('[Migration] Checking if migrations are needed...');
     console.log('[Migration] Script directory (__dirname):', __dirname);
+    console.log('[Migration] Process CWD:', process.cwd());
+    
+    // Try to find the sql directory
+    const sqlDir = path.resolve(__dirname, '../sql');
+    console.log('[Migration] Looking for SQL files in:', sqlDir);
+    
+    try {
+      const files = await fs.readdir(sqlDir);
+      console.log('[Migration] Found SQL files:', files);
+    } catch (err) {
+      console.error('[Migration] Cannot read SQL directory:', err.message);
+    }
     
     const migrations = [
       { file: '../sql/001_auth_schema.sql', name: 'Auth Schema' },
