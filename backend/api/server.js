@@ -37,21 +37,43 @@ app.use((req, res, next) => {
   next();
 });
 
-// CORS middleware - must be FIRST before any other middleware
+// Enhanced CORS middleware - Railway-compatible configuration
 app.use((req, res, next) => {
-  const origin = req.headers.origin || '*';
+  const origin = req.headers.origin;
   
-  // Set CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  console.log(`[CORS] Request from origin: ${origin}`);
+  
+  // Explicitly allow localhost and common development origins
+  const allowedOrigins = [
+    'http://localhost:8081',
+    'http://localhost:8080', 
+    'http://localhost:3000',
+    'https://recycle-production-up.railway.app',
+    'capacitor://localhost',
+    'ionic://localhost',
+    'http://localhost'
+  ];
+  
+  // Allow specific origins or all if origin is in allowed list
+  if (!origin || allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin || '*');
+  } else {
+    // For unknown origins, still allow (for mobile apps)
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  }
+  
+  // Comprehensive headers for Railway compatibility
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, Access-Control-Request-Method, Access-Control-Request-Headers');
+  res.setHeader('Access-Control-Allow-Credentials', 'false');
   res.setHeader('Access-Control-Max-Age', '86400');
-  res.setHeader('Vary', 'Origin');
+  res.setHeader('Vary', 'Origin, Access-Control-Request-Headers');
   
-  // Handle preflight requests
+  // Handle preflight requests immediately
   if (req.method === 'OPTIONS') {
-    console.log('[CORS] Preflight request for:', req.path);
-    return res.status(200).end();
+    console.log(`[CORS] Handling preflight for: ${req.path} from origin: ${origin}`);
+    res.status(200).end();
+    return;
   }
   
   next();
