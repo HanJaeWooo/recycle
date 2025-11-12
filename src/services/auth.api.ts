@@ -24,10 +24,21 @@ function getApiBase(): string {
   
   // In production builds, process.env is not available
   // Priority: Constants.expoConfig (from app.json) > process.env > fallback
-  const apiBase = 
+  let apiBase = 
     Constants.expoConfig?.extra?.API_BASE ||
     process.env.EXPO_PUBLIC_API_BASE || 
     'https://recycle-production-up.railway.app';
+  
+  // For browser development, use CORS proxy to bypass Railway's proxy restrictions
+  const isBrowser = Platform.OS === 'web';
+  const isDev = process.env.NODE_ENV === 'development';
+  
+  if (isBrowser && isDev) {
+    // Use CORS proxy for browser development
+    const corsProxyUrl = 'https://cors-anywhere.herokuapp.com/';
+    apiBase = corsProxyUrl + apiBase;
+    console.log('🔍 DEBUG - Using CORS proxy for browser development');
+  }
     
   console.log('🔍 DEBUG - Using API Base:', apiBase);
   console.log('🔍 DEBUG - Constants.expoConfig?.extra:', Constants.expoConfig?.extra);
