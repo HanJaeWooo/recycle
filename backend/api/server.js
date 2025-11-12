@@ -41,30 +41,31 @@ app.use((req, res, next) => {
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   
-  // Allow specific origins for development and production
-  const allowedOrigins = [
-    'http://localhost:8081',
-    'http://localhost:19006', 
-    'http://localhost:3000',
-    'https://recycle-production-up.railway.app',
-    'https://railway.com'
-  ];
+  // Railway-specific CORS configuration
+  // Set CORS headers BEFORE any other processing
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, Accept-Language, Content-Language');
+  res.header('Access-Control-Max-Age', '86400');
+  res.header('Access-Control-Expose-Headers', 'Content-Length, X-Requested-With');
+  res.header('Access-Control-Allow-Credentials', 'false');
   
-  // Set CORS headers - allow all origins for now to fix the issue
+  // Force override any Railway proxy headers
+  res.removeHeader('Access-Control-Allow-Origin');
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
-  res.setHeader('Access-Control-Max-Age', '86400');
-  res.setHeader('Access-Control-Expose-Headers', 'Content-Length, X-Requested-With');
-  res.setHeader('Access-Control-Allow-Credentials', 'false');
   
   // Log CORS info for debugging
   console.log(`[CORS] Request from origin: ${origin || 'none'} to ${req.method} ${req.path}`);
+  console.log(`[CORS] Response headers set:`, {
+    'Access-Control-Allow-Origin': res.getHeader('Access-Control-Allow-Origin'),
+    'Access-Control-Allow-Methods': res.getHeader('Access-Control-Allow-Methods')
+  });
   
-  // Handle preflight requests
+  // Handle preflight requests immediately
   if (req.method === 'OPTIONS') {
     console.log('[CORS] Preflight request handled for:', req.path);
-    return res.status(200).end();
+    res.status(200).end();
+    return;
   }
   
   next();
