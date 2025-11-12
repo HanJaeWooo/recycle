@@ -19,24 +19,28 @@ function getApiBase(): string {
     'Constants.expoConfig?.extra': Constants.expoConfig?.extra,
   });
   
-  // Always use Railway backend for both development and production
-  console.log('🔍 DEBUG - Using Railway backend for all environments');
+  // Force local backend for web development to avoid CORS issues
+  console.log('🔍 DEBUG - Environment detection:', {
+    platform: Platform.OS,
+    nodeEnv: process.env.NODE_ENV,
+    isDev: process.env.NODE_ENV === 'development'
+  });
   
-  // In production builds, process.env is not available
-  // Priority: Constants.expoConfig (from app.json) > process.env > fallback
-  let apiBase = 
-    Constants.expoConfig?.extra?.API_BASE ||
-    process.env.EXPO_PUBLIC_API_BASE || 
-    'https://recycle-production-up.railway.app';
-  
-  // For browser development, try direct connection first
-  // Railway handles CORS properly, no proxy needed
   const isBrowser = Platform.OS === 'web';
   const isDev = process.env.NODE_ENV === 'development';
   
-  if (isBrowser && isDev) {
-    console.log('🔍 DEBUG - Using direct connection to Railway (CORS should work)');
-    // Railway has CORS configured, no proxy needed
+  let apiBase;
+  
+  // FORCE local backend for any web browser development
+  if (isBrowser) {
+    apiBase = 'http://localhost:8080';
+    console.log('🔍 DEBUG - 🚀 FORCED local backend for web browser');
+  } else {
+    // Use Railway for mobile/production
+    apiBase = Constants.expoConfig?.extra?.API_BASE || 
+              process.env.EXPO_PUBLIC_API_BASE || 
+              'https://recycle-production-up.railway.app';
+    console.log('🔍 DEBUG - Using Railway backend for mobile/production');
   }
     
   console.log('🔍 DEBUG - Using API Base:', apiBase);
