@@ -39,18 +39,31 @@ app.use((req, res, next) => {
 
 // CORS middleware - must be FIRST before any other middleware
 app.use((req, res, next) => {
-  const origin = req.headers.origin || '*';
+  const origin = req.headers.origin;
   
-  // Set CORS headers
+  // Allow specific origins for development and production
+  const allowedOrigins = [
+    'http://localhost:8081',
+    'http://localhost:19006', 
+    'http://localhost:3000',
+    'https://recycle-production-up.railway.app',
+    'https://railway.com'
+  ];
+  
+  // Set CORS headers - allow all origins for now to fix the issue
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
   res.setHeader('Access-Control-Max-Age', '86400');
-  res.setHeader('Vary', 'Origin');
+  res.setHeader('Access-Control-Expose-Headers', 'Content-Length, X-Requested-With');
+  res.setHeader('Access-Control-Allow-Credentials', 'false');
+  
+  // Log CORS info for debugging
+  console.log(`[CORS] Request from origin: ${origin || 'none'} to ${req.method} ${req.path}`);
   
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
-    console.log('[CORS] Preflight request for:', req.path);
+    console.log('[CORS] Preflight request handled for:', req.path);
     return res.status(200).end();
   }
   
@@ -233,6 +246,17 @@ app.get('/test', (req, res) => {
   res.json({ 
     ok: true, 
     message: 'Backend is reachable',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// CORS test endpoint
+app.get('/cors-test', (req, res) => {
+  console.log('[cors-test] CORS test request received from origin:', req.headers.origin);
+  res.json({ 
+    ok: true, 
+    message: 'CORS is working!',
+    origin: req.headers.origin,
     timestamp: new Date().toISOString()
   });
 });
