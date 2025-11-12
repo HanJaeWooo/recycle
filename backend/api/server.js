@@ -182,6 +182,15 @@ app.get('/', (req, res) => {
   });
 });
 
+// Railway-specific health check (Railway uses this internally)
+app.get('/healthz', (req, res) => {
+  res.status(200).send('OK');
+});
+
+app.get('/ready', (req, res) => {
+  res.status(200).send('READY');
+});
+
 app.get('/health', async (req, res) => {
   try {
     const dbResult = await pool.query('SELECT NOW() as timestamp, version() as version');
@@ -897,6 +906,9 @@ app.use((req, res) => {
 const host = process.env.HOST || '0.0.0.0';
 const port = Number(process.env.PORT || 8080);
 
+// Railway health check - ensure we respond immediately
+console.log(`[api] Will listen on ${host}:${port}`);
+
 const server = app.listen(port, host, () => {
   console.log(`[api] ✅ Server started successfully`);
   console.log(`[api] listening on http://${host}:${port}`);
@@ -907,6 +919,37 @@ const server = app.listen(port, host, () => {
 server.on('error', (err) => {
   console.error(`[api] ❌ Server error:`, err.message);
   process.exit(1);
+});
+
+// Graceful shutdown handling for Railway
+process.on('SIGTERM', () => {
+  console.log('[api] 🔄 SIGTERM received. Starting graceful shutdown...');
+  server.close((err) => {
+    if (err) {
+      console.error('[api] ❌ Error during server shutdown:', err);
+      process.exit(1);
+    }
+    console.log('[api] ✅ Server closed gracefully');
+    pool.end(() => {
+      console.log('[api] ✅ Database connections closed');
+      process.exit(0);
+    });
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('[api] 🔄 SIGINT received. Starting graceful shutdown...');
+  server.close((err) => {
+    if (err) {
+      console.error('[api] ❌ Error during server shutdown:', err);
+      process.exit(1);
+    }
+    console.log('[api] ✅ Server closed gracefully');
+    pool.end(() => {
+      console.log('[api] ✅ Database connections closed');
+      process.exit(0);
+    });
+  });
 });
 
 process.on('uncaughtException', (err) => {
