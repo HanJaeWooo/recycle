@@ -4,7 +4,6 @@ import path from 'path';
 import pkg from 'pg';
 import fs from 'fs/promises';
 import { fileURLToPath } from 'url';
-import cors from 'cors';
 import { sendPasswordResetEmail, verifyEmailConfig } from './emailService.js';
 import { migrations } from './migrations.js';
 
@@ -38,30 +37,23 @@ app.use((req, res, next) => {
   next();
 });
 
-// CORS configuration - allow all origins
-const corsOptions = {
-  origin: function (origin, callback) {
-    // Allow all origins including undefined (for mobile apps, curl, etc)
-    callback(null, true);
-  },
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH', 'HEAD'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
-  credentials: false,
-  maxAge: 86400,
-  preflightContinue: false
-};
-
-app.use(cors(corsOptions));
-
-// Explicitly handle OPTIONS for preflight
-app.options('*', cors(corsOptions));
-
-// Additional CORS headers to override Railway proxy
+// CORS middleware - must be FIRST before any other middleware
 app.use((req, res, next) => {
+  const origin = req.headers.origin || '*';
+  
+  // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
   res.setHeader('Access-Control-Max-Age', '86400');
+  res.setHeader('Vary', 'Origin');
+  
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    console.log('[CORS] Preflight request for:', req.path);
+    return res.status(200).end();
+  }
+  
   next();
 });
 
