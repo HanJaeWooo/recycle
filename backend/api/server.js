@@ -294,6 +294,24 @@ app.get('/info', (req, res) => {
   });
 });
 
+// Test POST endpoint to verify body parsing
+app.post('/test-post', async (req, res) => {
+  console.log('[test-post] === POST TEST ===');
+  console.log('[test-post] Body:', req.body);
+  console.log('[test-post] Content-Type:', req.headers['content-type']);
+  
+  res.json({
+    success: true,
+    method: req.method,
+    body: req.body,
+    headers: {
+      'content-type': req.headers['content-type'],
+      'authorization': req.headers['authorization']
+    },
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Simple test auth endpoint that bypasses all middleware
 app.all('/test-auth', async (req, res) => {
   console.log('[test-auth] === DIRECT TEST ===');
@@ -332,14 +350,18 @@ app.all('/test-auth', async (req, res) => {
   }
 });
 
-// Register user
-app.post('/auth/register', async (req, res) => {
-  console.log('[register] === ROUTE HIT ===');
-  console.log('[register] Request received:', { body: req.body });
+// Register user - MOVED UP before any other middleware
+app.post('/auth/register', express.json(), async (req, res) => {
+  console.log('[register] === ROUTE HIT === METHOD:', req.method);
+  console.log('[register] Content-Type:', req.headers['content-type']);
+  console.log('[register] Body received:', req.body);
+  console.log('[register] Body type:', typeof req.body);
+  
   const { email, username, fullName, password, acceptTerms, acceptPrivacy } = req.body || {};
+  
   if (!email || !username || !password) {
-    console.log('[register] Missing fields');
-    return res.status(400).json({ error: 'missing_fields' });
+    console.log('[register] Missing fields - email:', !!email, 'username:', !!username, 'password:', !!password);
+    return res.status(400).json({ error: 'missing_fields', received: { email: !!email, username: !!username, password: !!password } });
   }
   try {
     console.log('[register] Calling auth.register_user');
