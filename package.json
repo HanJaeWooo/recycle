@@ -1,7 +1,7 @@
 {
   "name": "recycle-railway-root",
   "version": "1.0.0",
-  "main": "backend/api/server.js",
+  "main": "backend/api/server-simple.js",
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=8.0.0"
