@@ -262,6 +262,20 @@ app.get('/cors-test', (req, res) => {
   });
 });
 
+// Debug endpoint to see what routes are registered
+app.get('/debug-routes', (req, res) => {
+  const routes = [];
+  app._router.stack.forEach((middleware) => {
+    if (middleware.route) { // Routes registered directly on the app
+      routes.push({
+        path: middleware.route.path,
+        methods: Object.keys(middleware.route.methods)
+      });
+    }
+  });
+  res.json({ routes, total: routes.length });
+});
+
 // Environment info endpoint for debugging (development only)
 app.get('/info', (req, res) => {
   if (process.env.NODE_ENV === 'production') {
