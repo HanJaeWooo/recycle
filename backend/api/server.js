@@ -31,6 +31,74 @@ const { Pool } = pkg;
 
 const app = express();
 
+// URGENT FIX: Move auth routes to THE VERY TOP, before any middleware
+app.post('/auth/register', express.json(), async (req, res) => {
+  console.log('[register] === EARLY ROUTE HIT ===');
+  console.log('[register] Body:', req.body);
+  
+  const { email, username, password } = req.body || {};
+  if (!email || !username || !password) {
+    return res.status(400).json({ 
+      error: 'missing_fields', 
+      debug: 'Early route - missing email, username, or password' 
+    });
+  }
+  
+  try {
+    const { rows } = await pool.query(
+      'SELECT auth.register_user($1::citext, $2::citext, $3::text, $4::text, $5::boolean, $6::boolean) AS user_id',
+      [email, username, req.body.fullName || null, password, true, true]
+    );
+    return res.status(201).json({ userId: rows[0]?.user_id });
+  } catch (err) {
+    console.error('[register] Error:', err);
+    if (err?.code === '23505') {
+      return res.status(409).json({ error: 'user_exists' });
+    }
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+app.post('/auth/login', express.json(), async (req, res) => {
+  console.log('[login] === EARLY ROUTE HIT ===');
+  console.log('[login] Body:', req.body);
+  
+  const { identifier, password } = req.body || {};
+  if (!identifier || !password) {
+    return res.status(400).json({ error: 'missing_fields' });
+  }
+  
+  try {
+    const authRes = await pool.query('SELECT auth.authenticate_user($1::text, $2::text) AS user_id', [identifier, password]);
+    const userId = authRes.rows?.[0]?.user_id;
+    
+    if (!userId) {
+      return res.status(401).json({ error: 'invalid_credentials' });
+    }
+
+    const sessionRes = await pool.query(
+      'SELECT auth.create_session($1::uuid, $2::integer, $3::inet, $4::text) AS session_token',
+      [userId, 7 * 24 * 60, null, 'RecycleRN/1.0']
+    );
+    
+    const sessionToken = sessionRes.rows?.[0]?.session_token;
+    if (!sessionToken) {
+      return res.status(500).json({ error: 'session_creation_failed' });
+    }
+
+    return res.json({ userId: userId.toString(), sessionToken });
+  } catch (err) {
+    console.error('[login] Error:', err);
+    return res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// Simple test POST route at the very top
+app.post('/test-post', express.json(), (req, res) => {
+  console.log('[test-post] === EARLY TEST POST ===');
+  res.json({ success: true, body: req.body, method: req.method });
+});
+
 // Request logging middleware
 app.use((req, res, next) => {
   console.log('[REQUEST] Incoming:', { method: req.method, path: req.path, url: req.url });
@@ -350,88 +418,7 @@ app.all('/test-auth', async (req, res) => {
   }
 });
 
-// Register user - MOVED UP before any other middleware
-app.post('/auth/register', express.json(), async (req, res) => {
-  console.log('[register] === ROUTE HIT === METHOD:', req.method);
-  console.log('[register] Content-Type:', req.headers['content-type']);
-  console.log('[register] Body received:', req.body);
-  console.log('[register] Body type:', typeof req.body);
-  
-  const { email, username, fullName, password, acceptTerms, acceptPrivacy } = req.body || {};
-  
-  if (!email || !username || !password) {
-    console.log('[register] Missing fields - email:', !!email, 'username:', !!username, 'password:', !!password);
-    return res.status(400).json({ error: 'missing_fields', received: { email: !!email, username: !!username, password: !!password } });
-  }
-  try {
-    console.log('[register] Calling auth.register_user');
-    const { rows } = await pool.query(
-      'SELECT auth.register_user($1::citext, $2::citext, $3::text, $4::text, $5::boolean, $6::boolean) AS user_id',
-      [email, username, fullName || null, password, !!acceptTerms, !!acceptPrivacy]
-    );
-    console.log('[register] Success:', { userId: rows[0]?.user_id });
-    return res.status(201).json({ userId: rows[0]?.user_id });
-  } catch (err) {
-    console.error('[register] Database error:', { code: err?.code, message: err?.message, detail: err?.detail });
-    if (err?.code === '23505') {
-      // unique_violation
-      if (String(err?.detail || '').includes('email')) {
-        return res.status(409).json({ error: 'email_taken' });
-      }
-      if (String(err?.detail || '').includes('username')) {
-        return res.status(409).json({ error: 'username_taken' });
-      }
-      return res.status(409).json({ error: 'conflict' });
-    }
-    return res.status(500).json({ error: 'server_error' });
-  }
-});
-
-// Login and create session
-app.post('/auth/login', async (req, res) => {
-  console.log('[login] === ROUTE HIT ===');
-  console.log('[login] Request received');
-  
-  const { identifier, password } = req.body || {};
-  if (!identifier || !password) {
-    console.log('[login] Missing fields');
-    return res.status(400).json({ error: 'missing_fields' });
-  }
-  try {
-    console.log('[login] Attempting authentication');
-    // Authenticate user and get user ID
-    const authRes = await pool.query('SELECT auth.authenticate_user($1::text, $2::text) AS user_id', [identifier, password]);
-    const userId = authRes.rows?.[0]?.user_id;
-    
-    console.log('[login] Authentication result:', { hasUserId: !!userId });
-    
-    if (!userId) {
-      return res.status(401).json({ error: 'invalid_credentials' });
-    }
-
-    // Create session
-    const sessionRes = await pool.query(
-      'SELECT auth.create_session($1::uuid, $2::integer, $3::inet, $4::text) AS session_token',
-      [userId, 7 * 24 * 60, null, 'RecycleRN/1.0']
-    );
-    
-    const sessionToken = sessionRes.rows?.[0]?.session_token;
-    
-    console.log('[login] Session creation result:', { hasSessionToken: !!sessionToken });
-    
-    if (!sessionToken) {
-      return res.status(500).json({ error: 'session_creation_failed' });
-    }
-
-    return res.json({ 
-      userId: userId.toString(), 
-      sessionToken 
-    });
-  } catch (err) {
-    console.error('[login] error', err);
-    return res.status(500).json({ error: 'server_error' });
-  }
-});
+// Duplicate auth routes removed - using early routes instead
 
 // Request password reset
 app.post('/auth/password-reset/request', async (req, res) => {
