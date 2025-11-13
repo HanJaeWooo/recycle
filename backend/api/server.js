@@ -31,6 +31,42 @@ const { Pool } = pkg;
 
 const app = express();
 
+// Database configuration with support for cloud providers
+const getDatabaseConfig = () => {
+  // Prioritize DATABASE_URL (common in cloud platforms like Railway, Render)
+  if (process.env.DATABASE_URL) {
+    console.log('[DB] Using DATABASE_URL from environment');
+    return {
+      connectionString: process.env.DATABASE_URL,
+      ssl: process.env.NODE_ENV === 'production' ? { 
+        rejectUnauthorized: false,
+        // Add more SSL options if needed
+        ca: process.env.DATABASE_SSL_CERT // Optional: if you have a custom SSL cert
+      } : false,
+      max: 20,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 2000,
+    };
+  }
+  
+  // Fallback to individual environment variables
+  return {
+    user: process.env.DB_USER || 'postgres',
+    host: process.env.DB_HOST || 'localhost', 
+    database: process.env.DB_NAME || 'recycle_db',
+    password: process.env.DB_PASSWORD || '',
+    port: parseInt(process.env.DB_PORT || '5432'),
+    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+    max: 20,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 2000,
+  };
+};
+
+console.log('[DB] Creating connection pool...');
+const pool = new Pool(getDatabaseConfig());
+console.log('[DB] ✓ Pool created successfully');
+
 // URGENT FIX: Move auth routes to THE VERY TOP, before any middleware
 app.post('/auth/register', express.json(), async (req, res) => {
   console.log('[register] === EARLY ROUTE HIT ===');
