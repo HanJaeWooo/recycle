@@ -273,7 +273,11 @@ app.get('/debug-routes', (req, res) => {
       });
     }
   });
-  res.json({ routes, total: routes.length });
+  res.json({ 
+    routes, 
+    total: routes.length,
+    warning: 'If auth routes show here but return 404, check middleware order'
+  });
 });
 
 // Environment info endpoint for debugging (development only)
@@ -292,6 +296,7 @@ app.get('/info', (req, res) => {
 
 // Register user
 app.post('/auth/register', async (req, res) => {
+  console.log('[register] === ROUTE HIT ===');
   console.log('[register] Request received:', { body: req.body });
   const { email, username, fullName, password, acceptTerms, acceptPrivacy } = req.body || {};
   if (!email || !username || !password) {
@@ -324,6 +329,7 @@ app.post('/auth/register', async (req, res) => {
 
 // Login and create session
 app.post('/auth/login', async (req, res) => {
+  console.log('[login] === ROUTE HIT ===');
   console.log('[login] Request received');
   
   const { identifier, password } = req.body || {};
