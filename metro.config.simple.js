@@ -2,7 +2,7 @@ const { getDefaultConfig } = require('expo/metro-config');
 
 const config = getDefaultConfig(__dirname);
 
-// Simple configuration to avoid import.meta issues
+// Minimal configuration to fix import.meta issues
 config.transformer.getTransformOptions = async () => ({
   transform: {
     experimentalImportSupport: false,
@@ -10,7 +10,7 @@ config.transformer.getTransformOptions = async () => ({
   },
 });
 
-// Add video file extensions
+// Simple asset extensions
 config.resolver.assetExts.push('mp4', 'mov', 'avi', 'mkv', 'webm');
 
 module.exports = config;

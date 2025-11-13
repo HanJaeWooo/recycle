@@ -1,15 +1,15 @@
 {
   "name": "recycle-railway-root",
   "version": "1.0.0",
-  "main": "backend/api/server-simple.js",
+  "main": "backend/api/server.js",
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=8.0.0"
   },
   "scripts": {
-    "start": "NODE_ENV=production node backend/api/server-simple.js",
+    "start": "NODE_ENV=production node backend/api/server.js",
     "build": "echo 'No build step required'",
-    "dev": "node --watch backend/api/server-simple.js"
+    "dev": "node --watch backend/api/server.js"
   },
   "dependencies": {
     "dotenv": "^16.4.5",

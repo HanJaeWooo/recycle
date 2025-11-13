@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Railway Authentication</title>
+    <style>
+        body { font-family: Arial; margin: 40px; background: #f5f5f5; }
+        .container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        input { margin: 10px 0; padding: 12px; width: 300px; border: 1px solid #ddd; border-radius: 4px; }
+        button { padding: 12px 20px; margin: 10px 5px 10px 0; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .result { background: #f8f9fa; padding: 20px; margin: 20px 0; border-radius: 4px; border-left: 4px solid #007bff; }
+        .error { border-left-color: #dc3545; background: #f8d7da; }
+        .success { border-left-color: #28a745; background: #d4edda; }
+        h1 { color: #333; }
+        h3 { color: #666; margin-top: 30px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test Railway Authentication System</h1>
+        <p>Testing backend: <strong>https://recyclenew-production.up.railway.app</strong></p>
+        
+        <h3>📝 Test Register</h3>
+        <div>
+            <input type="email" id="email" placeholder="Email (e.g., test@example.com)">
+            <input type="text" id="username" placeholder="Username (e.g., testuser123)">
+            <input type="password" id="password" placeholder="Password">
+            <br>
+            <button onclick="testRegister()">Test Register</button>
+            <button onclick="testPost()">Test POST Parsing</button>
+        </div>
+        
+        <h3>🔑 Test Login</h3>
+        <div>
+            <input type="text" id="loginId" placeholder="Email or Username">
+            <input type="password" id="loginPass" placeholder="Password">
+            <br>
+            <button onclick="testLogin()">Test Login</button>
+        </div>
+        
+        <div id="result" class="result" style="display: none;"></div>
+    </div>
+
+    <script>
+    const API_BASE = 'https://recyclenew-production.up.railway.app';
+    
+    function showResult(content, type = 'info') {
+        const resultDiv = document.getElementById('result');
+        resultDiv.className = `result ${type}`;
+        resultDiv.innerHTML = content;
+        resultDiv.style.display = 'block';
+    }
+    
+    async function testPost() {
+        try {
+            const response = await fetch(`${API_BASE}/test-post`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ test: 'data', email: 'test@example.com' })
+            });
+            
+            const result = await response.json();
+            showResult(`
+                <h4>✅ POST Test Response:</h4>
+                <pre>${JSON.stringify(result, null, 2)}</pre>
+            `, 'success');
+        } catch (error) {
+            showResult(`
+                <h4>❌ POST Test Error:</h4>
+                <pre>${error.message}</pre>
+            `, 'error');
+        }
+    }
+    
+    async function testRegister() {
+        const email = document.getElementById('email').value || 'test@example.com';
+        const username = document.getElementById('username').value || 'testuser' + Date.now();
+        const password = document.getElementById('password').value || 'password123';
+        
+        try {
+            const response = await fetch(`${API_BASE}/auth/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    email, 
+                    username, 
+                    password,
+                    acceptTerms: true,
+                    acceptPrivacy: true
+                })
+            });
+            
+            const result = await response.json();
+            if (response.ok) {
+                showResult(`
+                    <h4>✅ Register Success!</h4>
+                    <pre>${JSON.stringify(result, null, 2)}</pre>
+                    <p><strong>User created successfully! You can now try logging in.</strong></p>
+                `, 'success');
+            } else {
+                showResult(`
+                    <h4>⚠️ Register Response (Status: ${response.status}):</h4>
+                    <pre>${JSON.stringify(result, null, 2)}</pre>
+                `, response.status < 500 ? 'info' : 'error');
+            }
+        } catch (error) {
+            showResult(`
+                <h4>❌ Register Error:</h4>
+                <pre>${error.message}</pre>
+            `, 'error');
+        }
+    }
+    
+    async function testLogin() {
+        const identifier = document.getElementById('loginId').value;
+        const password = document.getElementById('loginPass').value;
+        
+        if (!identifier || !password) {
+            showResult('<h4>⚠️ Please enter both username/email and password</h4>', 'error');
+            return;
+        }
+        
+        try {
+            const response = await fetch(`${API_BASE}/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ identifier, password })
+            });
+            
+            const result = await response.json();
+            if (response.ok) {
+                showResult(`
+                    <h4>✅ Login Success!</h4>
+                    <pre>${JSON.stringify(result, null, 2)}</pre>
+                    <p><strong>Authentication successful! Session token created.</strong></p>
+                `, 'success');
+            } else {
+                showResult(`
+                    <h4>⚠️ Login Response (Status: ${response.status}):</h4>
+                    <pre>${JSON.stringify(result, null, 2)}</pre>
+                `, response.status < 500 ? 'info' : 'error');
+            }
+        } catch (error) {
+            showResult(`
+                <h4>❌ Login Error:</h4>
+                <pre>${error.message}</pre>
+            `, 'error');
+        }
+    }
+    </script>
+</body>
+</html>

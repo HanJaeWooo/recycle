@@ -1,117 +1,144 @@
-import express from 'express';
 import dotenv from 'dotenv';
-import path from 'path';
+import express from 'express';
 import pkg from 'pg';
-import fs from 'fs/promises';
-import { fileURLToPath } from 'url';
-import { sendPasswordResetEmail, verifyEmailConfig } from './emailService.js';
-import { migrations } from './migrations.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Load environment variables
+dotenv.config();
 
-console.log('[STARTUP] __filename:', __filename);
-console.log('[STARTUP] __dirname:', __dirname);
-console.log('[STARTUP] Process started at:', new Date().toISOString());
-
-// Load .env file
-const envFile = path.resolve(process.cwd(), '.env');
-
-try {
-  dotenv.config({ path: envFile });
-  console.log('[ENV] ✓ Loaded configuration from:', envFile);
-} catch (err) {
-  console.warn('[ENV] ⚠️ Could not load .env file:', err.message);
-}
-
-console.log('[ENV] Current environment:', process.env.NODE_ENV || 'development');
+console.log('[STARTUP] Starting server...');
+console.log('[ENV] NODE_ENV:', process.env.NODE_ENV);
 console.log('[ENV] DATABASE_URL set:', !!process.env.DATABASE_URL);
 
 const { Pool } = pkg;
-
 const app = express();
 
-// Database configuration with support for cloud providers
-const getDatabaseConfig = () => {
-  // Prioritize DATABASE_URL (common in cloud platforms like Railway, Render)
-  if (process.env.DATABASE_URL) {
-    console.log('[DB] Using DATABASE_URL from environment');
-    return {
-      connectionString: process.env.DATABASE_URL,
-      ssl: process.env.NODE_ENV === 'production' ? { 
-        rejectUnauthorized: false,
-        // Add more SSL options if needed
-        ca: process.env.DATABASE_SSL_CERT // Optional: if you have a custom SSL cert
-      } : false,
-      max: 20,
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 2000,
-    };
+// Basic middleware
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// CORS for all routes
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
   }
-  
-  // Fallback to individual environment variables
-  return {
-    user: process.env.DB_USER || 'postgres',
-    host: process.env.DB_HOST || 'localhost', 
-    database: process.env.DB_NAME || 'recycle_db',
-    password: process.env.DB_PASSWORD || '',
-    port: parseInt(process.env.DB_PORT || '5432'),
+  next();
+});
+
+// Database configuration
+let pool;
+try {
+  console.log('[DB] Creating connection pool...');
+  pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-    max: 20,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 2000,
-  };
-};
+  });
+  console.log('[DB] ✓ Pool created successfully');
+} catch (err) {
+  console.error('[DB] Failed to create pool:', err);
+  process.exit(1);
+}
 
-console.log('[DB] Creating connection pool...');
-const pool = new Pool(getDatabaseConfig());
-console.log('[DB] ✓ Pool created successfully');
+// Health check
+app.get('/', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    message: 'Recycle API is running'
+  });
+});
 
-// URGENT FIX: Move auth routes to THE VERY TOP, before any middleware
-app.post('/auth/register', express.json(), async (req, res) => {
-  console.log('[register] === EARLY ROUTE HIT ===');
-  console.log('[register] Body:', req.body);
+app.get('/health', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT NOW() as timestamp');
+    res.json({
+      status: 'healthy',
+      database: 'connected',
+      server_time: result.rows[0].timestamp,
+      timestamp: new Date().toISOString()
+    });
+  } catch (err) {
+    res.status(500).json({
+      status: 'unhealthy',
+      database: 'disconnected',
+      error: err.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+// Simple test endpoints
+app.post('/test-post', (req, res) => {
+  console.log('[test-post] POST request received');
+  res.json({ 
+    success: true, 
+    body: req.body, 
+    method: req.method,
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Auth routes
+app.post('/auth/register', async (req, res) => {
+  console.log('[register] Registration attempt');
+  const { email, username, password } = req.body;
   
-  const { email, username, password } = req.body || {};
   if (!email || !username || !password) {
     return res.status(400).json({ 
-      error: 'missing_fields', 
-      debug: 'Early route - missing email, username, or password' 
+      error: 'missing_fields',
+      required: ['email', 'username', 'password']
     });
   }
   
   try {
     const { rows } = await pool.query(
       'SELECT auth.register_user($1::citext, $2::citext, $3::text, $4::text, $5::boolean, $6::boolean) AS user_id',
-      [email, username, req.body.fullName || null, password, true, true]
+      [email, username, null, password, true, true]
     );
-    return res.status(201).json({ userId: rows[0]?.user_id });
+    
+    res.status(201).json({ 
+      success: true,
+      userId: rows[0]?.user_id 
+    });
   } catch (err) {
     console.error('[register] Error:', err);
-    if (err?.code === '23505') {
+    
+    if (err.code === '23505') {
       return res.status(409).json({ error: 'user_exists' });
     }
-    return res.status(500).json({ error: 'server_error' });
+    
+    res.status(500).json({ 
+      error: 'server_error',
+      message: err.message 
+    });
   }
 });
 
-app.post('/auth/login', express.json(), async (req, res) => {
-  console.log('[login] === EARLY ROUTE HIT ===');
-  console.log('[login] Body:', req.body);
+app.post('/auth/login', async (req, res) => {
+  console.log('[login] Login attempt');
+  const { identifier, password } = req.body;
   
-  const { identifier, password } = req.body || {};
   if (!identifier || !password) {
-    return res.status(400).json({ error: 'missing_fields' });
+    return res.status(400).json({ 
+      error: 'missing_fields',
+      required: ['identifier', 'password']
+    });
   }
   
   try {
-    const authRes = await pool.query('SELECT auth.authenticate_user($1::text, $2::text) AS user_id', [identifier, password]);
-    const userId = authRes.rows?.[0]?.user_id;
+    const authRes = await pool.query(
+      'SELECT auth.authenticate_user($1::text, $2::text) AS user_id',
+      [identifier, password]
+    );
     
+    const userId = authRes.rows?.[0]?.user_id;
     if (!userId) {
       return res.status(401).json({ error: 'invalid_credentials' });
     }
-
+    
     const sessionRes = await pool.query(
       'SELECT auth.create_session($1::uuid, $2::integer, $3::inet, $4::text) AS session_token',
       [userId, 7 * 24 * 60, null, 'RecycleRN/1.0']
@@ -121,973 +148,44 @@ app.post('/auth/login', express.json(), async (req, res) => {
     if (!sessionToken) {
       return res.status(500).json({ error: 'session_creation_failed' });
     }
-
-    return res.json({ userId: userId.toString(), sessionToken });
+    
+    res.json({ 
+      success: true,
+      userId: userId.toString(), 
+      sessionToken 
+    });
   } catch (err) {
     console.error('[login] Error:', err);
-    return res.status(500).json({ error: 'server_error' });
-  }
-});
-
-// Simple test POST route at the very top
-app.post('/test-post', express.json(), (req, res) => {
-  console.log('[test-post] === EARLY TEST POST ===');
-  res.json({ success: true, body: req.body, method: req.method });
-});
-
-// Request logging middleware
-app.use((req, res, next) => {
-  console.log('[REQUEST] Incoming:', { method: req.method, path: req.path, url: req.url });
-  next();
-});
-
-// CORS middleware - must be FIRST before any other middleware
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  
-  // Railway-specific CORS configuration
-  // Set CORS headers BEFORE any other processing
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, Accept-Language, Content-Language');
-  res.header('Access-Control-Max-Age', '86400');
-  res.header('Access-Control-Expose-Headers', 'Content-Length, X-Requested-With');
-  res.header('Access-Control-Allow-Credentials', 'false');
-  
-  // Force override any Railway proxy headers
-  res.removeHeader('Access-Control-Allow-Origin');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  
-  // Log CORS info for debugging
-  console.log(`[CORS] Request from origin: ${origin || 'none'} to ${req.method} ${req.path}`);
-  console.log(`[CORS] Response headers set:`, {
-    'Access-Control-Allow-Origin': res.getHeader('Access-Control-Allow-Origin'),
-    'Access-Control-Allow-Methods': res.getHeader('Access-Control-Allow-Methods')
-  });
-  
-  // Handle preflight requests immediately
-  if (req.method === 'OPTIONS') {
-    console.log('[CORS] Preflight request handled for:', req.path);
-    res.status(200).end();
-    return;
-  }
-  
-  next();
-});
-
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-// Database configuration with support for cloud providers
-const getDatabaseConfig = () => {
-  // Prioritize DATABASE_URL (common in cloud platforms like Railway, Render)
-  if (process.env.DATABASE_URL) {
-    console.log('[DB] Using DATABASE_URL from environment');
-    return {
-      connectionString: process.env.DATABASE_URL,
-      ssl: process.env.NODE_ENV === 'production' ? { 
-        rejectUnauthorized: false,
-        // Add more SSL options if needed
-        ca: process.env.DATABASE_SSL_CERT // Optional: if you have a custom SSL cert
-      } : false,
-      max: 20,
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 2000,
-    };
-  }
-  
-  // Fallback to individual environment variables
-  console.log('[DB] Using individual PostgreSQL environment variables');
-  return {
-    host: process.env.PGHOST || 'localhost',
-    port: Number(process.env.PGPORT || 5432),
-    database: process.env.PGDATABASE || 'recycle_app',
-    user: process.env.PGUSER || 'postgres',
-    password: process.env.PGPASSWORD || '',
-    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-    max: 20,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 2000,
-  };
-};
-
-let pool;
-try {
-  const dbConfig = getDatabaseConfig();
-  console.log('[DB] Creating connection pool...');
-  pool = new Pool(dbConfig);
-  console.log('[DB] ✓ Pool created successfully');
-} catch (err) {
-  console.error('[DB] ❌ Failed to create pool:', err.message);
-  process.exit(1);
-}
-
-// Enhanced database connection logging
-pool.on('connect', () => {
-  console.log('[pg] Database connected successfully');
-});
-
-pool.on('error', (err) => {
-  console.error('[pg pool error]', err.message);
-  
-  // Log connection details for debugging (without sensitive info)
-  if (process.env.NODE_ENV !== 'production') {
-    console.error('[pg] Database config:', {
-      host: process.env.PGHOST || 'localhost',
-      port: process.env.PGPORT || 5432,
-      database: process.env.PGDATABASE || 'recycle_app',
-      ssl: process.env.NODE_ENV === 'production'
-    });
-  }
-});
-
-// Test database connection on startup (non-blocking)
-setTimeout(() => {
-  pool.query('SELECT NOW()', (err, result) => {
-    if (err) {
-      console.error('[pg] Initial connection test failed:', err.message);
-    } else {
-      console.log('[pg] Database connection test successful at:', result.rows[0].now);
-    }
-  });
-}, 1000);
-
-// Auto-run migrations on startup (using embedded SQL)
-async function runMigrationsOnStartup() {
-  try {
-    console.log('[Migration] Checking if migrations are needed...');
-    console.log(`[Migration] Found ${migrations.length} migrations to apply`);
-
-    for (const migration of migrations) {
-      try {
-        console.log(`[Migration] Applying ${migration.name}...`);
-        await pool.query(migration.sql);
-        console.log(`[Migration] ✓ ${migration.name} applied successfully`);
-      } catch (error) {
-        // Ignore errors - migrations use IF NOT EXISTS so they're safe to re-run
-        console.log(`[Migration] ${migration.name}: ${error.message.substring(0, 100)}`);
-      }
-    }
-    
-    console.log('[Migration] Migration check completed');
-  } catch (error) {
-    console.error('[Migration] Fatal error during migrations:', error.message);
-  }
-}
-
-// Run migrations after a short delay to ensure DB connection is ready
-setTimeout(() => {
-  runMigrationsOnStartup();
-}, 2000);
-
-// Verify email configuration on startup
-verifyEmailConfig().then(isConfigured => {
-  if (isConfigured) {
-    console.log('[email] ✅ Email service configured and ready');
-  } else {
-    console.warn('[email] ⚠️ Email service not configured. Password reset emails will not be sent.');
-    console.warn('[email] Add GMAIL_USER and GMAIL_APP_PASSWORD to environment variables to enable email sending.');
-  }
-});
-
-// Root endpoint
-app.get('/', (req, res) => {
-  res.json({ 
-    ok: true, 
-    message: 'Recycle Backend API',
-    version: '1.0.0',
-    timestamp: new Date().toISOString()
-  });
-});
-
-// Railway-specific health check (Railway uses this internally)
-app.get('/healthz', (req, res) => {
-  res.status(200).send('OK');
-});
-
-app.get('/ready', (req, res) => {
-  res.status(200).send('READY');
-});
-
-app.get('/health', async (req, res) => {
-  try {
-    const dbResult = await pool.query('SELECT NOW() as timestamp, version() as version');
-    res.json({ 
-      ok: true, 
-      timestamp: new Date().toISOString(),
-      database: {
-        connected: true,
-        timestamp: dbResult.rows[0].timestamp
-      },
-      environment: process.env.NODE_ENV || 'development'
-    });
-  } catch (err) {
-    console.error('[health] error', err);
-    const verbose = process.env.DEBUG === '1' || req.query.debug === '1' || req.query.verbose === '1';
-    const body = { 
-      ok: false, 
-      error: 'db_unavailable',
-      timestamp: new Date().toISOString(),
-      environment: process.env.NODE_ENV || 'development'
-    };
-    if (verbose) {
-      body.code = err.code;
-      body.detail = String(err.message || err);
-      body.config = {
-        host: process.env.PGHOST,
-        port: process.env.PGPORT,
-        database: process.env.PGDATABASE,
-        user: process.env.PGUSER,
-        hasConnectionString: !!process.env.DATABASE_URL,
-      };
-    }
-    res.status(500).json(body);
-  }
-});
-
-// Test endpoint to verify app can reach backend
-app.get('/test', (req, res) => {
-  console.log('[test] App connectivity test - request received');
-  res.json({ 
-    ok: true, 
-    message: 'Backend is reachable',
-    timestamp: new Date().toISOString()
-  });
-});
-
-// CORS test endpoint
-app.get('/cors-test', (req, res) => {
-  console.log('[cors-test] CORS test request received from origin:', req.headers.origin);
-  res.json({ 
-    ok: true, 
-    message: 'CORS is working!',
-    origin: req.headers.origin,
-    timestamp: new Date().toISOString()
-  });
-});
-
-// Debug endpoint to see what routes are registered
-app.get('/debug-routes', (req, res) => {
-  const routes = [];
-  app._router.stack.forEach((middleware) => {
-    if (middleware.route) { // Routes registered directly on the app
-      routes.push({
-        path: middleware.route.path,
-        methods: Object.keys(middleware.route.methods)
-      });
-    }
-  });
-  res.json({ 
-    routes, 
-    total: routes.length,
-    warning: 'If auth routes show here but return 404, check middleware order'
-  });
-});
-
-// Environment info endpoint for debugging (development only)
-app.get('/info', (req, res) => {
-  if (process.env.NODE_ENV === 'production') {
-    return res.status(404).json({ error: 'Not found' });
-  }
-  
-  res.json({
-    node_env: process.env.NODE_ENV,
-    port: process.env.PORT || 4000,
-    host: process.env.HOST || '0.0.0.0',
-    database_url_provided: !!process.env.DATABASE_URL
-  });
-});
-
-// Test POST endpoint to verify body parsing
-app.post('/test-post', async (req, res) => {
-  console.log('[test-post] === POST TEST ===');
-  console.log('[test-post] Body:', req.body);
-  console.log('[test-post] Content-Type:', req.headers['content-type']);
-  
-  res.json({
-    success: true,
-    method: req.method,
-    body: req.body,
-    headers: {
-      'content-type': req.headers['content-type'],
-      'authorization': req.headers['authorization']
-    },
-    timestamp: new Date().toISOString()
-  });
-});
-
-// Simple test auth endpoint that bypasses all middleware
-app.all('/test-auth', async (req, res) => {
-  console.log('[test-auth] === DIRECT TEST ===');
-  console.log('[test-auth] Method:', req.method);
-  console.log('[test-auth] Headers:', req.headers);
-  console.log('[test-auth] Body:', req.body);
-  
-  try {
-    // Test database connection
-    const dbResult = await pool.query('SELECT NOW() as timestamp');
-    
-    // Test auth schema
-    const schemaResult = await pool.query(`
-      SELECT table_name 
-      FROM information_schema.tables 
-      WHERE table_schema = 'auth'
-    `);
-    
-    res.json({
-      success: true,
-      method: req.method,
-      timestamp: new Date().toISOString(),
-      database: {
-        connected: true,
-        server_time: dbResult.rows[0].timestamp,
-        auth_tables: schemaResult.rows.map(r => r.table_name)
-      }
-    });
-  } catch (err) {
-    console.error('[test-auth] Error:', err);
-    res.status(500).json({
-      success: false,
-      error: err.message,
-      timestamp: new Date().toISOString()
-    });
-  }
-});
-
-// Duplicate auth routes removed - using early routes instead
-
-// Request password reset
-app.post('/auth/password-reset/request', async (req, res) => {
-  const { email } = req.body || {};
-  if (!email) {
-    return res.status(400).json({ error: 'missing_email' });
-  }
-  try {
-    const { rows } = await pool.query(
-      'SELECT * FROM auth.create_password_reset($1::citext, $2::integer, $3::inet)',
-      [email, 30, null]
-    );
-    
-    // If no token was created, user doesn't exist
-    // Still return success to avoid revealing user existence (security best practice)
-    if (!rows || rows.length === 0) {
-      console.log('[password-reset/request] No user found with email (security: returning success anyway)');
-      return res.json({ ok: true });
-    }
-    
-    const { user_id: userId, token, expires_at: expiresAt } = rows[0];
-    
-    // Send password reset email
-    const emailSent = await sendPasswordResetEmail(email, token);
-    
-    if (emailSent) {
-      console.log('[password-reset/request] ✅ Password reset email sent to:', email);
-    } else {
-      console.warn('[password-reset/request] ⚠️ Failed to send email (email service not configured), returning token for dev');
-    }
-    
-    // In development, also return the token for testing
-    // In production, only send via email (comment out the token return)
-    const isDevelopment = process.env.NODE_ENV !== 'production';
-    const responsePayload = { ok: true };
-    
-    if (isDevelopment && !emailSent) {
-      // Only include token in response if email failed to send (for dev/testing)
-      responsePayload.token = token;
-      responsePayload.expiresAt = expiresAt;
-      console.log('[password-reset/request] [DEV MODE] Token included in response:', token);
-    }
-    
-    return res.json(responsePayload);
-  } catch (err) {
-    console.error('[password-reset/request] error', err);
-    return res.status(500).json({ error: 'server_error' });
-  }
-});
-
-// Consume password reset
-app.post('/auth/password-reset/consume', async (req, res) => {
-  const { token, newPassword } = req.body || {};
-  if (!token || !newPassword) {
-    return res.status(400).json({ error: 'missing_fields' });
-  }
-  try {
-    const { rows } = await pool.query(
-      'SELECT auth.consume_password_reset($1::text, $2::text, $3::inet) AS ok',
-      [token, newPassword, null]
-    );
-    return res.json({ ok: rows[0]?.ok === true });
-  } catch (err) {
-    console.error('[password-reset/consume] error', err);
-    return res.status(500).json({ error: 'server_error' });
-  }
-});
-
-// Middleware to validate session token
-const validateSession = async (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  
-  if (!authHeader) {
-    console.warn('[auth] No authorization header');
-    return res.status(401).json({ error: 'missing_authorization' });
-  }
-
-  const token = authHeader.split(' ')[1]; // Bearer TOKEN
-  
-  if (!token) {
-    console.warn('[auth] Invalid authorization header format');
-    return res.status(401).json({ error: 'invalid_authorization_format' });
-  }
-
-  try {
-    // Verify the session token
-    const { rows } = await pool.query(
-      `SELECT user_id, expires_at 
-       FROM auth.sessions 
-       WHERE session_token = $1 
-         AND revoked_at IS NULL 
-         AND expires_at > NOW()`,
-      [token]
-    );
-
-    if (rows.length === 0) {
-      console.warn(`[auth] Invalid or expired session token: ${token}`);
-      return res.status(401).json({ error: 'invalid_or_expired_token' });
-    }
-
-    // Attach user ID to the request for subsequent middleware/routes
-    req.userId = rows[0].user_id;
-    next();
-  } catch (err) {
-    console.error('[auth] Session validation error:', err);
-    res.status(500).json({ error: 'server_error' });
-  }
-};
-
-// Fetch user profile
-app.get('/auth/profile', validateSession, async (req, res) => {
-  // Use the validated user ID from the middleware
-  const userId = req.query.userId || req.userId;
-  
-  console.log('[profile] Received request for userId:', userId);
-  console.log('[profile] Authenticated user ID:', req.userId);
-
-  if (!userId) {
-    console.warn('[profile] Missing userId');
-    return res.status(400).json({ error: 'missing_user_id' });
-  }
-
-  // Additional check to prevent accessing another user's profile
-  if (userId !== req.userId.toString()) {
-    console.warn(`[profile] User ID mismatch: requested ${userId}, authenticated ${req.userId}`);
-    return res.status(403).json({ error: 'access_denied' });
-  }
-
-  try {
-    const { rows } = await pool.query(
-      `SELECT 
-        id::text, 
-        email, 
-        username, 
-        COALESCE(
-          NULLIF(TRIM(full_name), ''),
-          INITCAP(REGEXP_REPLACE(username, '\\d+', ' $0', 'g'))
-        ) AS full_name, 
-        last_login_at, 
-        created_at 
-      FROM auth.users 
-      WHERE id = $1::uuid`, 
-      [userId]
-    );
-
-    if (rows.length === 0) {
-      console.warn(`[profile] No user found with ID: ${userId}`);
-      return res.status(404).json({ error: 'user_not_found' });
-    }
-
-    const userProfile = rows[0];
-    
-    console.log(`[profile] Profile retrieved for user: ${userProfile.username}, Full Name: ${userProfile.full_name}`);
-    res.json(userProfile);
-  } catch (err) {
-    console.error('[profile] Error retrieving profile:', err);
     res.status(500).json({ 
       error: 'server_error',
-      details: process.env.NODE_ENV !== 'production' ? err.message : undefined 
+      message: err.message 
     });
   }
 });
 
-// Update user profile
-app.put('/auth/profile', validateSession, async (req, res) => {
-  const { fullName, username } = req.body;
-  const userId = req.userId;
-
-  console.log('[profile/update] Received update request:', { 
-    userId, 
-    fullName: fullName || 'Not provided', 
-    username: username || 'Not provided'
+// 404 handler
+app.use('*', (req, res) => {
+  res.status(404).json({ 
+    error: 'not_found', 
+    path: req.originalUrl,
+    method: req.method
   });
-
-  if (!userId) {
-    console.warn('[profile/update] No user ID provided');
-    return res.status(400).json({ error: 'missing_user_id' });
-  }
-
-  try {
-    // Prepare update parameters
-    const updateParams = [];
-    const queryParams = [userId];
-    let queryString = 'UPDATE auth.users SET ';
-
-    let paramIndex = 2; // Start from 2 as userId is the first param
-    
-    // Validate and sanitize full name
-    if (fullName !== undefined) {
-      // Trim and capitalize words, remove extra spaces
-      const sanitizedFullName = fullName.trim()
-        .split(/\s+/)
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-        .join(' ');
-
-      // Only update if not empty after sanitization
-      if (sanitizedFullName) {
-        updateParams.push(sanitizedFullName);
-        queryString += `full_name = $${paramIndex}, `;
-        paramIndex++;
-      }
-    }
-
-    if (username !== undefined) {
-      // Validate username: lowercase, no spaces
-      const sanitizedUsername = username.trim().toLowerCase().replace(/\s+/g, '');
-      
-      if (sanitizedUsername) {
-        updateParams.push(sanitizedUsername);
-        queryString += `username = $${paramIndex}, `;
-        paramIndex++;
-      }
-    }
-
-    // Remove trailing comma and space
-    queryString = queryString.slice(0, -2);
-    
-    // Add WHERE clause
-    queryString += ` WHERE id = $1 RETURNING 
-      full_name, 
-      username,
-      COALESCE(
-        NULLIF(TRIM(full_name), ''),
-        INITCAP(REPLACE(username, SUBSTRING(username FROM '[0-9]+'), ' ' || SUBSTRING(username FROM '[0-9]+')))
-      ) AS display_full_name`;
-
-    // Combine userId with other update parameters
-    const finalParams = [userId, ...updateParams];
-
-    console.log('[profile/update] Executing query:', {
-      query: queryString,
-      params: finalParams
-    });
-
-    const { rows } = await pool.query(queryString, finalParams);
-
-    if (rows.length === 0) {
-      console.warn(`[profile/update] No user found with ID: ${userId}`);
-      return res.status(404).json({ error: 'user_not_found' });
-    }
-
-    const updatedProfile = rows[0];
-    
-    console.log('[profile/update] Profile updated successfully:', updatedProfile);
-    
-    res.json({
-      message: 'Profile updated successfully',
-      profile: {
-        full_name: updatedProfile.display_full_name,
-        username: updatedProfile.username
-      }
-    });
-  } catch (err) {
-    console.error('[profile/update] Error updating profile:', err);
-    
-    // Handle unique constraint violations
-    if (err.code === '23505') {
-      if (String(err.detail || '').includes('username')) {
-        return res.status(409).json({ error: 'username_taken' });
-      }
-    }
-    
-    res.status(500).json({ 
-      error: 'server_error',
-      details: process.env.NODE_ENV !== 'production' ? err.message : undefined 
-    });
-  }
 });
 
-// Save scan history
-app.post('/scan-history', validateSession, async (req, res) => {
-  console.log('[DETAILED SCAN HISTORY] Full Request Body:', req.body);
-  console.log('[DETAILED SCAN HISTORY] Request Headers:', req.headers);
-  console.log('[DETAILED SCAN HISTORY] Authenticated User ID:', req.userId);
-
-  const { materialLabel, confidence, imageUrl, detectionDetails, userId } = req.body;
-  const authenticatedUserId = req.userId;
-
-  try {
-    // Comprehensive logging
-    console.log('[scan-history] Received scan history request:', { 
-      authenticatedUserId, 
-      requestedUserId: userId,
-      materialLabel, 
-      confidence,
-      imageUrl: !!imageUrl,
-      detectionDetailsProvided: !!detectionDetails
-    });
-
-    // Validate user ID
-    if (!authenticatedUserId) {
-      console.warn('[scan-history] No authenticated user ID');
-      return res.status(401).json({ 
-        error: 'unauthorized',
-        details: 'No authenticated user found' 
-      });
-    }
-
-    // Ensure the requested user ID matches the authenticated user ID
-    if (userId && userId !== authenticatedUserId.toString()) {
-      console.warn(`[scan-history] User ID mismatch: requested ${userId}, authenticated ${authenticatedUserId}`);
-      return res.status(403).json({ 
-        error: 'access_denied',
-        details: 'User ID mismatch' 
-      });
-    }
-
-    // Use authenticated user ID if not provided in the request
-    const finalUserId = userId || authenticatedUserId;
-
-    // Validate required fields with detailed error messages
-    if (!materialLabel) {
-      console.warn('[scan-history] Missing material label');
-      return res.status(400).json({ 
-        error: 'missing_material_label',
-        details: 'Material label is required' 
-      });
-    }
-
-    if (confidence === undefined || confidence === null) {
-      console.warn('[scan-history] Missing or invalid confidence');
-      return res.status(400).json({ 
-        error: 'invalid_confidence',
-        details: 'Confidence score is required and must be a number' 
-      });
-    }
-
-    // Prepare detection details, ensuring it's a valid JSON
-    const safeDetectionDetails = detectionDetails ? 
-      (typeof detectionDetails === 'string' ? detectionDetails : JSON.stringify(detectionDetails)) : 
-      '{}';
-
-    const { rows } = await pool.query(
-      `INSERT INTO recycling.scan_history 
-        (user_id, material_label, confidence, image_url, detection_details) 
-      VALUES ($1, $2, $3, $4, $5) 
-      RETURNING id::text, material_label, confidence, image_url, created_at`,
-      [finalUserId, materialLabel, confidence, imageUrl, safeDetectionDetails]
-    );
-
-    console.log('[scan-history] Scan saved successfully', {
-      id: rows[0].id,
-      materialLabel: rows[0].material_label,
-      userId: finalUserId
-    });
-
-    res.status(201).json(rows[0]);
-  } catch (err) {
-    console.error('[scan-history] Comprehensive Error:', {
-      message: err.message,
-      code: err.code,
-      detail: err.detail,
-      stack: err.stack
-    });
-
-    res.status(500).json({ 
-      error: 'server_error',
-      details: process.env.NODE_ENV !== 'production' ? {
-        message: err.message,
-        code: err.code,
-        detail: err.detail
-      } : undefined 
-    });
-  }
+// Start server
+const PORT = process.env.PORT || 8080;
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log(`[SERVER] ✅ Server running on http://0.0.0.0:${PORT}`);
 });
 
-// Retrieve scan history
-app.get('/scan-history', validateSession, async (req, res) => {
-  const userId = req.query.userId || req.userId;
-  const limit = parseInt(req.query.limit || '50', 10);
-  const offset = parseInt(req.query.offset || '0', 10);
-
-  console.log('[scan-history] Retrieving scan history:', { 
-    userId, 
-    limit, 
-    offset 
-  });
-
-  if (!userId) {
-    console.warn('[scan-history] No user ID provided');
-    return res.status(400).json({ error: 'missing_user_id' });
-  }
-
-  try {
-    const { rows } = await pool.query(
-      `SELECT 
-        id::text, 
-        material_label, 
-        confidence, 
-        image_url, 
-        created_at 
-      FROM recycling.scan_history 
-      WHERE user_id = $1 
-      ORDER BY created_at DESC 
-      LIMIT $2 OFFSET $3`,
-      [userId, limit, offset]
-    );
-
-    const { rows: countRows } = await pool.query(
-      `SELECT COUNT(*) as total 
-      FROM recycling.scan_history 
-      WHERE user_id = $1`,
-      [userId]
-    );
-
-    console.log('[scan-history] Retrieved scan history successfully', {
-      scansCount: rows.length,
-      total: parseInt(countRows[0].total, 10)
-    });
-
-    res.json({
-      scans: rows,
-      total: parseInt(countRows[0].total, 10)
-    });
-  } catch (err) {
-    console.error('[scan-history] Error retrieving scan history:', err);
-    res.status(500).json({ 
-      error: 'server_error',
-      details: process.env.NODE_ENV !== 'production' ? err.message : undefined 
-    });
-  }
-});
-
-// Get user inventory
-app.get('/inventory', validateSession, async (req, res) => {
-  const userId = req.query.userId || req.userId;
-
-  console.log('[inventory] Retrieving inventory:', { userId });
-
-  if (!userId) {
-    console.warn('[inventory] No user ID provided');
-    return res.status(400).json({ error: 'missing_user_id' });
-  }
-
-  try {
-    const { rows } = await pool.query(
-      `SELECT 
-        id::text, 
-        material_label, 
-        quantity,
-        max_quantity,
-        image_url, 
-        confidence,
-        created_at,
-        updated_at
-      FROM recycling.inventory 
-      WHERE user_id = $1 
-      ORDER BY created_at DESC`,
-      [userId]
-    );
-
-    console.log('[inventory] Retrieved inventory successfully', {
-      itemsCount: rows.length
-    });
-
-    res.json({ items: rows });
-  } catch (err) {
-    console.error('[inventory] Error retrieving inventory:', err);
-    res.status(500).json({ 
-      error: 'server_error',
-      details: process.env.NODE_ENV !== 'production' ? err.message : undefined 
-    });
-  }
-});
-
-// Sync inventory from scan history
-app.post('/inventory/sync', validateSession, async (req, res) => {
-  const userId = req.userId;
-
-  console.log('[inventory/sync] Syncing inventory for user:', userId);
-
-  try {
-    await pool.query('SELECT recycling.sync_inventory_from_scans($1)', [userId]);
-
-    // Return updated inventory
-    const { rows } = await pool.query(
-      `SELECT 
-        id::text, 
-        material_label, 
-        quantity,
-        max_quantity,
-        image_url, 
-        confidence,
-        created_at,
-        updated_at
-      FROM recycling.inventory 
-      WHERE user_id = $1 
-      ORDER BY created_at DESC`,
-      [userId]
-    );
-
-    console.log('[inventory/sync] Inventory synced successfully', {
-      itemsCount: rows.length
-    });
-
-    res.json({ items: rows });
-  } catch (err) {
-    console.error('[inventory/sync] Error syncing inventory:', err);
-    res.status(500).json({ 
-      error: 'server_error',
-      details: process.env.NODE_ENV !== 'production' ? err.message : undefined 
-    });
-  }
-});
-
-// Update inventory item quantity
-app.put('/inventory/:id', validateSession, async (req, res) => {
-  const { id } = req.params;
-  const { quantity } = req.body;
-  const userId = req.userId;
-
-  console.log('[inventory/update] Updating inventory item:', { id, quantity, userId });
-
-  if (quantity === undefined || quantity === null) {
-    return res.status(400).json({ error: 'missing_quantity' });
-  }
-
-  try {
-    const { rows } = await pool.query(
-      `UPDATE recycling.inventory 
-      SET quantity = GREATEST(0, LEAST($1, max_quantity))
-      WHERE id = $2 AND user_id = $3
-      RETURNING id::text, material_label, quantity, max_quantity, image_url, confidence, updated_at`,
-      [quantity, id, userId]
-    );
-
-    if (rows.length === 0) {
-      return res.status(404).json({ error: 'item_not_found' });
-    }
-
-    console.log('[inventory/update] Item updated successfully');
-    res.json(rows[0]);
-  } catch (err) {
-    console.error('[inventory/update] Error updating item:', err);
-    res.status(500).json({ 
-      error: 'server_error',
-      details: process.env.NODE_ENV !== 'production' ? err.message : undefined 
-    });
-  }
-});
-
-// Delete inventory items
-app.delete('/inventory', validateSession, async (req, res) => {
-  const { ids } = req.body;
-  const userId = req.userId;
-
-  console.log('[inventory/delete] Deleting inventory items:', { ids, userId });
-
-  if (!ids || !Array.isArray(ids) || ids.length === 0) {
-    return res.status(400).json({ error: 'missing_ids' });
-  }
-
-  try {
-    const { rowCount } = await pool.query(
-      `DELETE FROM recycling.inventory 
-      WHERE id = ANY($1::uuid[]) AND user_id = $2`,
-      [ids, userId]
-    );
-
-    console.log('[inventory/delete] Items deleted successfully', { deletedCount: rowCount });
-    res.json({ deleted: rowCount });
-  } catch (err) {
-    console.error('[inventory/delete] Error deleting items:', err);
-    res.status(500).json({ 
-      error: 'server_error',
-      details: process.env.NODE_ENV !== 'production' ? err.message : undefined 
-    });
-  }
-});
-
-// Catch-all 404 handler to log unmatched routes
-app.use((req, res) => {
-  console.error('[404] Unmatched route:', { method: req.method, path: req.path, url: req.url });
-  res.status(404).json({ error: 'not_found', path: req.path });
-});
-
-const host = process.env.HOST || '0.0.0.0';
-const port = Number(process.env.PORT || 8080);
-
-// Railway health check - ensure we respond immediately
-console.log(`[api] Will listen on ${host}:${port}`);
-
-const server = app.listen(port, host, () => {
-  console.log(`[api] ✅ Server started successfully`);
-  console.log(`[api] listening on http://${host}:${port}`);
-  console.log(`[api] PORT env var: ${process.env.PORT}`);
-  console.log(`[api] HOST env var: ${process.env.HOST}`);
-});
-
-server.on('error', (err) => {
-  console.error(`[api] ❌ Server error:`, err.message);
-  process.exit(1);
-});
-
-// Graceful shutdown handling for Railway
+// Graceful shutdown
 process.on('SIGTERM', () => {
-  console.log('[api] 🔄 SIGTERM received. Starting graceful shutdown...');
-  server.close((err) => {
-    if (err) {
-      console.error('[api] ❌ Error during server shutdown:', err);
-      process.exit(1);
-    }
-    console.log('[api] ✅ Server closed gracefully');
+  console.log('[SERVER] SIGTERM received, shutting down gracefully');
+  server.close(() => {
     pool.end(() => {
-      console.log('[api] ✅ Database connections closed');
       process.exit(0);
     });
   });
 });
 
-process.on('SIGINT', () => {
-  console.log('[api] 🔄 SIGINT received. Starting graceful shutdown...');
-  server.close((err) => {
-    if (err) {
-      console.error('[api] ❌ Error during server shutdown:', err);
-      process.exit(1);
-    }
-    console.log('[api] ✅ Server closed gracefully');
-    pool.end(() => {
-      console.log('[api] ✅ Database connections closed');
-      process.exit(0);
-    });
-  });
-});
-
-process.on('uncaughtException', (err) => {
-  console.error('[api] ❌ Uncaught exception:', err);
-  process.exit(1);
-});
-
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('[api] ❌ Unhandled rejection at:', promise, 'reason:', reason);
-  process.exit(1);
-});
-
-
+export default app;
