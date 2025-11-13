@@ -3,6 +3,9 @@ const path = require('path');
 
 const config = getDefaultConfig(__dirname);
 
+// Fix import.meta issues
+config.resolver.platforms = ['ios', 'android', 'native', 'web'];
+
 // Add video file extensions to asset extensions
 config.resolver.assetExts.push(
   'mp4',
@@ -12,7 +15,7 @@ config.resolver.assetExts.push(
   'webm'
 );
 
-// Configure transformer to handle large assets
+// Configure transformer to handle large assets and fix import.meta
 config.transformer = {
   ...config.transformer,
   getTransformOptions: async () => ({
@@ -21,7 +24,22 @@ config.transformer = {
       inlineRequires: false,
     },
   }),
+  // Add this to handle import.meta issues
+  minifierConfig: {
+    keep_fnames: true,
+    mangle: {
+      keep_fnames: true,
+    },
+  },
 };
+
+// Fix for import.meta in web builds
+if (process.env.EXPO_PLATFORM === 'web') {
+  config.resolver.alias = {
+    ...config.resolver.alias,
+    'react-native$': 'react-native-web',
+  };
+}
 
 // Add public folder to watch folders for web
 config.watchFolders = [

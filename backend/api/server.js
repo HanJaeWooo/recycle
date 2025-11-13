@@ -294,6 +294,44 @@ app.get('/info', (req, res) => {
   });
 });
 
+// Simple test auth endpoint that bypasses all middleware
+app.all('/test-auth', async (req, res) => {
+  console.log('[test-auth] === DIRECT TEST ===');
+  console.log('[test-auth] Method:', req.method);
+  console.log('[test-auth] Headers:', req.headers);
+  console.log('[test-auth] Body:', req.body);
+  
+  try {
+    // Test database connection
+    const dbResult = await pool.query('SELECT NOW() as timestamp');
+    
+    // Test auth schema
+    const schemaResult = await pool.query(`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_schema = 'auth'
+    `);
+    
+    res.json({
+      success: true,
+      method: req.method,
+      timestamp: new Date().toISOString(),
+      database: {
+        connected: true,
+        server_time: dbResult.rows[0].timestamp,
+        auth_tables: schemaResult.rows.map(r => r.table_name)
+      }
+    });
+  } catch (err) {
+    console.error('[test-auth] Error:', err);
+    res.status(500).json({
+      success: false,
+      error: err.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
 // Register user
 app.post('/auth/register', async (req, res) => {
   console.log('[register] === ROUTE HIT ===');
