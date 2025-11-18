@@ -1,0 +1,20 @@
+names:
+  0: Woods
+  1: Metal cans
+  2: Plastic bottle
+  3: Cardboard
+  4: Corduroy
+  5: Denim
+  6: Cotton
+  7: Hangers
+  8: Utensils
+  9: Metal Bars
+  10: Bottle cups
+  11: Cups
+  12: Chiffon
+  13: Coppers
+nc: 14
+path: C:\Users\USER\Downloads\rn-recyclev1\rn-recycle1\backend\Datasets
+test: combined_test
+train: combined_train
+val: combined_val

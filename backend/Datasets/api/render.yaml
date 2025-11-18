@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: recycle-backend-api
+    env: node
+    plan: free
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      # Database URL will be manually set in Render dashboard
+      # GOOGLE_CLIENT_ID will be manually set in Render dashboard
