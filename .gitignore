@@ -35,10 +35,8 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
-# Backend large files (too large for GitHub)
-backend/Datasets/
+# Backend artifacts
 backend/__pycache__/
-backend/*.pt
 backend/api/node_modules/
 
 # Public videos (should be served from CDN, not in repo)

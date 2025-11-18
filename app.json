@@ -45,7 +45,10 @@
       "API_BASE": "https://recyclenew-production.up.railway.app",
       "API_BASE_DEV": "http://localhost:8080",
       "DETECTION_API_URL": "https://recyclenew-production.up.railway.app",
+      "DETECTION_API_URL_DEV": "http://localhost:8000",
       "YT_API_KEY": "AIzaSyDaLg8m91aMEFVpL-_Zm4ns22esl2Mn10k",
+      "CLOUDINARY_CLOUD_NAME": "dahlpf7fr",
+      "CLOUDINARY_API_KEY": "444983293318996",
       "eas": {
         "projectId": "48a21728-513e-4e3d-9a9d-5007f87a4263"
       }

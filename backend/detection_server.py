@@ -4,6 +4,8 @@ from pydantic import BaseModel
 from typing import List, Optional
 import base64
 import io
+import os
+from pathlib import Path
 from PIL import Image
 import uvicorn
 from ultralytics import YOLO
@@ -21,25 +23,30 @@ app.add_middleware(
 )
 
 # Load your trained YOLO model
-import os
+def resolve_model_path() -> Path:
+    """Return the model path using env override or bundled defaults."""
+    override = os.getenv("YOLO_MODEL_PATH")
+    if override:
+        candidate = Path(override).expanduser()
+        print(f"🔍 YOLO_MODEL_PATH override provided: {candidate}")
+        return candidate
+
+    script_dir = Path(__file__).resolve().parent
+    bundled = script_dir / "Datasets" / "runs" / "detect" / "manual_recycling_model" / "weights" / "best.pt"
+    fallback = script_dir / "best.pt"
+    print(f"🔍 Looking for trained model at: {bundled}")
+    if bundled.exists():
+        return bundled
+    print(f"⚠️ Custom model not found, checking fallback at: {fallback}")
+    return fallback
+
 try:
-    # Get the directory where this script is located
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    
-    # Try to load the custom trained model first
-    model_path = os.path.join(script_dir, "Datasets", "runs", "detect", "manual_recycling_model", "weights", "best.pt")
-    print(f"🔍 Looking for trained model at: {model_path}")
-    
-    # Fallback to old model path if custom model doesn't exist
-    if not os.path.exists(model_path):
-        model_path = os.path.join(script_dir, "best.pt")
-        print(f"⚠️ Custom model not found, using fallback model at: {model_path}")
-    
-    if not os.path.exists(model_path):
+    model_path = resolve_model_path()
+    if not model_path.exists():
         raise FileNotFoundError(f"Model file not found at {model_path}")
-    
+
     model = YOLO(model_path)
-    print("✅ YOLO model loaded successfully")
+    print(f"✅ YOLO model loaded successfully from {model_path}")
     print(f"📊 Model classes: {list(model.names.values())}")
 except Exception as e:
     print(f"❌ Failed to load model: {e}")

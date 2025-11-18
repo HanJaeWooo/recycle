@@ -1,0 +1,6 @@
+backend/**
+backend/api/**
+node_modules/backend/**
+*.md
+test-*.bat
+test-*.html
