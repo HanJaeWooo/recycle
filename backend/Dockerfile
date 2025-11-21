@@ -4,18 +4,18 @@ WORKDIR /app
 
 # Install system dependencies (required by ultralytics + pillow)
 RUN apt-get update && apt-get install -y \
-    libgl1-mesa-glx \
+    libgl1 \
     libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy only requirements first (build cache optimization)
-COPY requirements.txt .
+COPY backend/requirements.txt ./requirements.txt
 
 # Install Python dependencies exactly as pinned
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the rest of your application code
-COPY . .
+COPY backend/ .
 
 EXPOSE 8000
 
