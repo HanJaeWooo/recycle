@@ -11,11 +11,16 @@ RUN apt-get update && apt-get install -y \
 # Copy only requirements first (build cache optimization)
 COPY backend/requirements.txt ./requirements.txt
 
-# Install Python dependencies exactly as pinned
-RUN pip install --no-cache-dir -r requirements.txt
+
+# Install Python dependencies exactly as pinned (longer timeout + PyTorch CPU index)
+RUN pip install --default-timeout=1000 --no-cache-dir -r requirements.txt \
+    --extra-index-url https://download.pytorch.org/whl/cpu
 
 # Copy the rest of your application code
 COPY backend/ .
+
+# Include trained model weights (Datasets folder)
+COPY backend/Datasets ./Datasets
 
 EXPOSE 8000
 
