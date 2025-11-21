@@ -12,6 +12,7 @@ from ultralytics.nn.modules import conv as yolo_conv
 from ultralytics.nn.modules import block as yolo_block
 from torch.nn import Conv2d, BatchNorm2d, SiLU
 from torch.nn.modules.container import Sequential
+from torch.nn import Conv2d, BatchNorm2d, SiLU, ModuleList
 import torch
 import numpy as np
 
@@ -36,7 +37,8 @@ torch.serialization.add_safe_globals([
     yolo_block.C2f,
     Conv2d,
     BatchNorm2d,
-    SiLU
+    SiLU,
+    ModuleList,
 ])
 try:
     # Get the directory where this script is located
