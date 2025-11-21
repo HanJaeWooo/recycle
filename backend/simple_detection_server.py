@@ -114,7 +114,11 @@ def main():
     
     # Load YOLO model
     try:
-        model = YOLO(model_path)
+        model = YOLO(
+            model_path,
+            task="detect",
+            weights_only=True  # Skip loading DFLoss to avoid compatibility issues
+        )
         print(f"✅ YOLO model loaded successfully from: {model_path}")
         print(f"✅ Model classes: {list(model.names.values())}")
     except Exception as e:

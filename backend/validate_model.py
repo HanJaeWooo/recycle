@@ -21,7 +21,11 @@ def validate_current_model():
     
     try:
         # Load the model
-        model = YOLO(model_path)
+        model = YOLO(
+            model_path,
+            task="detect",
+            weights_only=True  # Skip loading DFLoss to avoid compatibility issues
+        )
         print("✅ Model loaded successfully")
         
         # Print model info

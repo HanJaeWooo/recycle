@@ -38,7 +38,11 @@ try:
     if not os.path.exists(model_path):
         raise FileNotFoundError(f"Model file not found at {model_path}")
     
-    model = YOLO(model_path)
+    model = YOLO(
+        model_path,
+        task="detect",
+        weights_only=True  # Skip loading DFLoss to avoid compatibility issues
+    )
     print("✅ YOLO model loaded successfully")
     print(f"📊 Model classes: {list(model.names.values())}")
 except Exception as e:
