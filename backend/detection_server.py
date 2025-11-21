@@ -13,23 +13,35 @@ from ultralytics.nn.modules import block as yolo_block
 from torch.nn import Conv2d, BatchNorm2d, SiLU, ModuleList
 from torch.nn.modules.container import Sequential
 
-
-
-
 import torch
 import numpy as np
+import ultralytics.utils.loss as yolo_loss
 
-# Force torch.load to default to weights_only=True so training-only objects
-# like DFLoss are ignored when loading YOLO checkpoints.
+# Provide a stub DFLoss class if it's missing so older checkpoints can unpickle
+# under newer Ultralytics/Torch versions. This is safe because DFLoss is a
+# training-only loss and is not used during inference.
+if not hasattr(yolo_loss, "DFLoss"):
+    class DFLoss(torch.nn.Module):
+        def __init__(self, *args, **kwargs):
+            super().__init__()
+
+        def forward(self, *args, **kwargs):
+            raise RuntimeError("DFLoss is training-only and should not be used at inference time.")
+
+    yolo_loss.DFLoss = DFLoss
+
+# Ensure torch.load always uses weights_only=False so we bypass the new
+# safe-loading path that rejects custom classes like DetectionModel. We
+# trust our own checkpoint, so this is acceptable here.
 _original_torch_load = torch.load
 
 
-def safe_torch_load(*args, **kwargs):
-    kwargs.setdefault("weights_only", True)
+def unsafe_torch_load(*args, **kwargs):
+    kwargs.setdefault("weights_only", False)
     return _original_torch_load(*args, **kwargs)
 
 
-torch.load = safe_torch_load
+torch.load = unsafe_torch_load
 
 app = FastAPI(title="Recycling Detection API")
 
