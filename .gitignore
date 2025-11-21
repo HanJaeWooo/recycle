@@ -36,13 +36,10 @@ yarn-error.*
 *.tsbuildinfo
 
 # Backend large files (too large for GitHub)
-backend/Datasets/
-backend/__pycache__/
-backend/*.pt
-backend/api/node_modules/
-
-# Public videos (should be served from CDN, not in repo)
-public/videos/
+# backend/Datasets/
+backend/Datasets/venv/
+backend/Datasets/**/*.dll
+backend/Datasets/**/*.lib
 
 # Build artifacts
 *.apk
