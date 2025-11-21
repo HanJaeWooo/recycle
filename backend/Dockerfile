@@ -1,20 +1,23 @@
-# Use the official Node.js runtime as the base image
-FROM node:18-alpine
+FROM python:3.10-slim
 
-# Set the working directory inside the container
 WORKDIR /app
 
-# Copy package.json and package-lock.json to the container
-COPY package*.json ./
+# Install system dependencies (required by ultralytics + pillow)
+RUN apt-get update && apt-get install -y \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install dependencies
-RUN npm ci --only=production
+# Copy only requirements first (build cache optimization)
+COPY requirements.txt .
 
-# Copy the rest of the application code to the container
+# Install Python dependencies exactly as pinned
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the rest of your application code
 COPY . .
 
-# Expose the port the app runs on
-EXPOSE 4000
+EXPOSE 8000
 
-# Define the command to run the application
-CMD ["npm", "start"]
+# Start FastAPI app
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
