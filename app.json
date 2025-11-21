@@ -5,34 +5,37 @@
     "owner": "davidsuballa26",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.jpg",
+    "icon": "./assets/appLogo.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": false,
+    "newArchEnabled": true,
     "scheme": "rnrecycle",
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/applg.png",
       "resizeMode": "contain",
       "backgroundColor": "#F2E0AE"
+      // TEST COMMENT
     },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.rnrecycle.app",
-      "urlSchemes": [
-        "com.rnrecycle.app",
-        "rnrecycle",
-        "exp"
-      ]
+      "scheme": "rnrecycle"
     },
     "android": {
       "package": "com.rnrecycle.app",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/appLogo.png",
         "backgroundColor": "#ffffff"
       },
-      "urlSchemes": [
-        "com.rnrecycle.app",
-        "rnrecycle",
-        "exp"
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "data": [
+            {
+              "scheme": "rnrecycle"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
       ]
     },
     "web": {
@@ -42,24 +45,13 @@
       "expo-font"
     ],
     "extra": {
-      "API_BASE": "https://recycle-app-98di.onrender.com",
-      "API_BASE_DEV": "https://recycle-app-98di.onrender.com",
+      "API_BASE": "https://recyclenew-production.up.railway.app",
+      "API_BASE_DEV": "https://recyclenew-production.up.railway.app",
       "DETECTION_API_URL": "http://192.168.1.32:8000",
       "YT_API_KEY": "AIzaSyDaLg8m91aMEFVpL-_Zm4ns22esl2Mn10k",
       "eas": {
         "projectId": "48a21728-513e-4e3d-9a9d-5007f87a4263"
       }
-    },
-    "hooks": {
-      "postPublish": [
-        {
-          "file": "sentry-expo/upload-sourcemaps",
-          "config": {
-            "organization": "UDM",
-            "project": "rn-recycle"
-          }
-        }
-      ]
     }
   }
 }

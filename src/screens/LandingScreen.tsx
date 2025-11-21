@@ -1,4 +1,5 @@
-import { View, Text, StyleSheet, Image, Pressable, Animated, Easing, ImageBackground, SafeAreaView, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, Image, Pressable, Animated, Easing, ImageBackground, StatusBar } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, radii } from '@/utils/theme';
 import { useNavigation } from '@react-navigation/native';

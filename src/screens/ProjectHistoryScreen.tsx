@@ -31,6 +31,33 @@ export default function ProjectHistoryScreen() {
     }, [completedProjects])
   );
 
+  const getMaterialEmoji = (material: string): string => {
+    const materialLower = material.toLowerCase();
+    
+    // Match exact material names from ideas.ts
+    if (materialLower.includes('bottle caps')) return '🔵';
+    if (materialLower.includes('cardboard')) return '📦';
+    if (materialLower.includes('chiffon')) return '🧵';
+    if (materialLower.includes('copper')) return '🟠';
+    if (materialLower.includes('corduroy')) return '🧵';
+    if (materialLower.includes('cotton')) return '🧵';
+    if (materialLower.includes('denim')) return '👖';
+    if (materialLower.includes('hanger')) return '🧥';
+    if (materialLower.includes('metal') || materialLower.includes('can')) return '🔩';
+    if (materialLower.includes('plastic bottle')) return '🧴';
+    if (materialLower.includes('cup')) return '🥤';
+    if (materialLower.includes('utensil')) return '🍴';
+    if (materialLower.includes('wood')) return '🪵';
+    if (materialLower.includes('paper')) return '📄';
+    if (materialLower.includes('glass')) return '🫙';
+    
+    // Fallback for broader categories
+    if (materialLower.includes('textile') || materialLower.includes('fabric')) return '🧵';
+    if (materialLower.includes('plastic')) return '🧴';
+    
+    return '♻️'; // Default recycling emoji
+  };
+
   const toImageSource = (imageStr?: string) => {
     if (!imageStr) return undefined;
     if (imageStr.startsWith('local:video:')) return undefined;
@@ -59,16 +86,23 @@ export default function ProjectHistoryScreen() {
     }
   };
 
-  const renderProjectItem = ({ item }: { item: any }) => (
-    <View style={styles.projectCard}>
-      {toImageSource(item.image) && (
-        <Image
-          source={toImageSource(item.image)}
-          style={styles.projectImage}
-          resizeMode="cover"
-        />
-      )}
-      <View style={styles.projectInfo}>
+  const renderProjectItem = ({ item }: { item: any }) => {
+    const imageSource = toImageSource(item.image);
+    
+    return (
+      <View style={styles.projectCard}>
+        {imageSource ? (
+          <Image
+            source={imageSource}
+            style={styles.projectImage}
+            resizeMode="cover"
+          />
+        ) : (
+          <View style={styles.projectImagePlaceholder}>
+            <Text style={styles.projectEmoji}>{getMaterialEmoji(item.material)}</Text>
+          </View>
+        )}
+        <View style={styles.projectInfo}>
         <View style={styles.projectHeader}>
           <View style={styles.projectTextContainer}>
             <Text style={styles.projectTitle} numberOfLines={2}>
@@ -92,7 +126,8 @@ export default function ProjectHistoryScreen() {
         </View>
       </View>
     </View>
-  );
+    );
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -201,6 +236,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: 20,
+    paddingBottom: 100, // Extra space for tab bar
   },
   projectCard: {
     backgroundColor: 'white',
@@ -216,6 +252,19 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 180,
     backgroundColor: '#F3F4F6',
+  },
+  projectImagePlaceholder: {
+    width: '100%',
+    height: 180,
+    backgroundColor: '#F3F4F6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    display: 'flex',
+  },
+  projectEmoji: {
+    fontSize: 80,
+    textAlign: 'center',
+    lineHeight: 80,
   },
   projectInfo: {
     padding: 16,

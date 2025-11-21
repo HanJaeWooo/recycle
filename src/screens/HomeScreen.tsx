@@ -1,5 +1,6 @@
 import { useNavigation } from '@react-navigation/native';
-import { View, Text, Pressable, StyleSheet, FlatList, StatusBar, SafeAreaView } from 'react-native';
+import { View, Text, Pressable, StyleSheet, FlatList, StatusBar } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { CompositeNavigationProp } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
@@ -13,10 +14,10 @@ type HomeScreenNavigationProp = CompositeNavigationProp<
 >;
 
 const featuredCategories = [
-  { id: 'plastic', title: 'Plastic', emoji: '♻️', borderColor: '#60A5FA' },
+  { id: 'plastic', title: 'Plastic', emoji: '🧴', borderColor: '#60A5FA' },
   { id: 'metal', title: 'Metal', emoji: '🔩', borderColor: '#C084FC' },
   { id: 'cardboard', title: 'Cardboard', emoji: '📦', borderColor: '#FBBF24' },
-  { id: 'textile', title: 'Textile', emoji: '👗', borderColor: '#F59E0B' },
+  { id: 'textile', title: 'Fabric', emoji: '🧵', borderColor: '#4ADE80' },
 ];
 
 export default function HomeScreen() {

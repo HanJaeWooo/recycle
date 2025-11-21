@@ -1,6 +1,7 @@
-import { View, Text, StyleSheet, Pressable, Alert, ScrollView, Platform, SafeAreaView, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Alert, ScrollView, Platform, StatusBar } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import HeaderBar from '@/components/HeaderBar';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useProjectStore } from '@/store/useProjectStore';
 import { useState } from 'react';
@@ -75,20 +76,22 @@ export default function SettingsScreen() {
   };
 
   const handleAboutUs = () => {
-    Alert.alert(
-      'About SNAPCRAFT',
-      'SNAPCRAFT - Your AI-powered recycling companion app that helps you scan, identify, and turn waste into wonderful upcycled projects.',
-      [{ text: 'OK' }]
-    );
+    navigation.navigate('AboutUs' as never);
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" />
-      <ScrollView style={styles.container}>
-      <HeaderBar title="Settings" />
-      
-      {/* Account Section */}
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Settings</Text>
+        </View>
+        <ScrollView 
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}>
+          
+          {/* Account Section */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>👤 Account</Text>
         <Pressable style={styles.settingRow} onPress={() => navigation.navigate('Profile' as never)}>
@@ -147,21 +150,47 @@ export default function SettingsScreen() {
           <Text style={styles.logoutText}>LOGOUT</Text>
         </Pressable>
       </View>
-      </ScrollView>
+        </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#F2E0AE' },
+  safeArea: { 
+    flex: 1, 
+    backgroundColor: '#F2E0AE',
+  },
   container: { 
     flex: 1, 
-    backgroundColor: '#F2E0AE' 
+    backgroundColor: '#F2E0AE',
+  },
+  header: {
+    backgroundColor: '#C65C1C',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginBottom: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  title: {
+    fontWeight: '700',
+    fontSize: 20,
+    color: '#FFE4C8',
+    textAlign: 'center',
+  },
+  scrollView: {
+    flex: 1,
+    backgroundColor: '#F2E0AE',
+  },
+  scrollContent: {
+    paddingTop: 10,
+    paddingBottom: Platform.OS === 'ios' ? 120 : 90, // Larger padding for iOS due to home indicator
   },
   section: { 
     marginTop: 20,
     backgroundColor: 'white',
-    marginHorizontal: 16,
+    marginHorizontal: 20,
     borderRadius: 12,
     padding: 16
   },

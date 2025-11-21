@@ -23,7 +23,7 @@ function getApiBase(): string {
   const apiBase = 
     process.env.EXPO_PUBLIC_API_BASE || 
     Constants.expoConfig?.extra?.API_BASE ||
-    'https://recycle-app-98di.onrender.com';
+    'https://recyclenew-production.up.railway.app';
     
   console.log('🔍 DEBUG - Using API Base:', apiBase);
   

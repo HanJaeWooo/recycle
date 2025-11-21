@@ -32,17 +32,7 @@ console.log(`🌐 Detected local IP: ${localIP}`);
 const envPath = path.join(__dirname, '.env');
 let envContent = fs.readFileSync(envPath, 'utf8');
 
-// Update the API base URL to localhost for development
-const apiBaseUrl = `http://${localIP}:4000`;
-if (envContent.includes('EXPO_PUBLIC_API_BASE=')) {
-  envContent = envContent.replace(
-    /EXPO_PUBLIC_API_BASE=https?:\/\/[^\s]+/,
-    `EXPO_PUBLIC_API_BASE=${apiBaseUrl}`
-  );
-} else {
-  envContent += `\nEXPO_PUBLIC_API_BASE=${apiBaseUrl}`;
-}
-
+// Detection server remains local, so keep the dynamic IP there
 // Update the detection API URL
 const detectionUrl = `http://${localIP}:8000`;
 envContent = envContent.replace(
@@ -67,7 +57,6 @@ if (!envContent.includes('EXPO_PUBLIC_VIDEO_SERVER_PORT=')) {
 }
 
 fs.writeFileSync(envPath, envContent);
-console.log(`📝 Updated .env with API base URL: ${apiBaseUrl}`);
 console.log(`📝 Updated .env with detection URL: ${detectionUrl}`);
 console.log(`📝 Updated .env with video server URL: ${videoServerUrl}`);
 

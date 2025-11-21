@@ -36,9 +36,9 @@ export default function CustomTabBar({ state, descriptors, navigation }: BottomT
   return (
     <View style={styles.wrapper}>
       <LinearGradient
-        colors={['#1C1C1C', '#000']}
+        colors={['#222222', '#000000']}
         start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
+        end={{ x: 0, y: 1 }}
         style={styles.container}
       >
         {state.routes.map((route, index) => {
@@ -87,13 +87,13 @@ export default function CustomTabBar({ state, descriptors, navigation }: BottomT
                 >
                   <Ionicons
                     name={getIconName(route.name, isFocused)}
-                    size={26}
-                    color={isFocused ? '#F5B942' : '#fff'}
+                    size={22}
+                    color={isFocused ? '#000' : '#fff'}
                   />
                 </View>
                 {isFocused && (
                   <Text style={styles.activeLabel}>
-                    {label}
+                    {typeof label === 'string' ? label : route.name}
                   </Text>
                 )}
               </Animated.View>
@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
     bottom: 15,
     left: 20,
     right: 20,
-    borderRadius: 40,
+    borderRadius: 30,
     overflow: 'hidden',
     elevation: 15,
     shadowColor: '#000',
@@ -121,31 +121,35 @@ const styles = StyleSheet.create({
   },
   container: {
     flexDirection: 'row',
-    height: 70,
+    height: 65,
     justifyContent: 'space-around',
     alignItems: 'center',
-    borderRadius: 40,
-    paddingHorizontal: 10,
+    borderRadius: 30,
+    paddingBottom: 8,
   },
   tab: {
     flex: 1,
     alignItems: 'center',
+    paddingTop: 12,
+    height: '100%',
   },
   iconWrapper: {
     alignItems: 'center',
     justifyContent: 'center',
+    height: '100%',
   },
   iconBackground: {
-    borderRadius: 25,
-    padding: 10,
+    borderRadius: 20,
+    padding: 8,
+    marginBottom: 4,
   },
   activeIconBackground: {
-    backgroundColor: '#F5B942',
+    backgroundColor: '#FF9500',
   },
   activeLabel: {
-    color: '#F5B942',
-    fontWeight: '700',
+    color: '#FF9500',
+    fontWeight: '600',
     fontSize: 12,
-    marginTop: 4,
+    marginTop: 2,
   },
 });

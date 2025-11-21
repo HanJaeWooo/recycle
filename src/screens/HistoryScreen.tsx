@@ -7,13 +7,12 @@ import {
   Image, 
   TouchableOpacity, 
   ActivityIndicator, 
-  Alert,
-  SafeAreaView,
-  StatusBar 
+  Alert
 } from 'react-native';
-import HeaderBar from '@/components/HeaderBar';
+import { LinearGradient } from 'expo-linear-gradient';
 import { colors, radii } from '@/utils/theme';
-import { getScanHistory } from '@/services/materials';
+import { getScanHistory, clearScanHistory } from '@/services/materials';
+import FullScreenWrapper from '@/components/FullScreenWrapper';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useHistoryStore } from '@/store/useHistoryStore';
 import { useNavigation } from '@react-navigation/native';
@@ -36,6 +35,28 @@ export default function HistoryScreen() {
   const userId = useAuthStore((s) => s.userId);
   const localHistory = useHistoryStore((s) => s.items);
   const navigation = useNavigation();
+
+  const getMaterialEmoji = (material: string): string => {
+    const materialLower = material.toLowerCase();
+    if (materialLower.includes('bottle caps')) return '🔵';
+    if (materialLower.includes('cardboard')) return '📦';
+    if (materialLower.includes('chiffon')) return '🧵';
+    if (materialLower.includes('copper')) return '🟠';
+    if (materialLower.includes('corduroy')) return '🧵';
+    if (materialLower.includes('cotton')) return '🧵';
+    if (materialLower.includes('denim')) return '👖';
+    if (materialLower.includes('hanger')) return '🧥';
+    if (materialLower.includes('metal') || materialLower.includes('can')) return '🔩';
+    if (materialLower.includes('plastic bottle') || materialLower.includes('bottle')) return '🧴';
+    if (materialLower.includes('cup')) return '🥤';
+    if (materialLower.includes('utensil')) return '🍴';
+    if (materialLower.includes('wood')) return '🪵';
+    if (materialLower.includes('paper')) return '📄';
+    if (materialLower.includes('glass')) return '🫙';
+    if (materialLower.includes('textile') || materialLower.includes('fabric')) return '🧵';
+    if (materialLower.includes('plastic')) return '🧴';
+    return '♻️';
+  };
 
   // Combine and deduplicate local and backend history
   const combinedHistory = useMemo(() => {
@@ -110,22 +131,33 @@ export default function HistoryScreen() {
     fetchHistory();
   }, [userId]);
 
-  const renderHistoryItem = ({ item }: { item: ScanHistoryItem }) => (
-    <TouchableOpacity 
-      style={styles.historyItem}
-      onPress={() => {
-        // Navigate to Library with the scanned material to show project ideas
-        navigation.navigate('Library' as never, { material: item.material_label } as never);
-      }}
-    >
-      {item.image_url && (
-        <Image 
-          source={{ uri: item.image_url }} 
-          style={styles.historyImage} 
-          resizeMode="cover" 
-        />
-      )}
-      <View style={styles.historyDetails}>
+  const renderHistoryItem = ({ item }: { item: ScanHistoryItem }) => {
+    // Show image if available (both remote URLs and local file URIs)
+    const hasImage = item.image_url && item.image_url.trim().length > 0;
+    
+    return (
+      <TouchableOpacity 
+        style={styles.historyItem}
+        onPress={() => {
+          // Navigate to Library with the scanned material to show project ideas
+          navigation.navigate('Library' as never, { material: item.material_label } as never);
+        }}
+      >
+        {hasImage ? (
+          <Image 
+            source={{ uri: item.image_url }} 
+            style={styles.historyImage} 
+            resizeMode="cover"
+            onError={(error) => {
+              console.log('Image load error:', item.image_url, error.nativeEvent.error);
+            }}
+          />
+        ) : (
+          <View style={styles.historyImagePlaceholder}>
+            <Text style={styles.historyEmoji}>{getMaterialEmoji(item.material_label)}</Text>
+          </View>
+        )}
+        <View style={styles.historyDetails}>
         <Text style={styles.materialLabel}>
           {item.material_label}
         </Text>
@@ -137,7 +169,8 @@ export default function HistoryScreen() {
         </Text>
       </View>
     </TouchableOpacity>
-  );
+    );
+  };
 
   const renderFooter = () => {
     if (!loading) return null;
@@ -151,7 +184,7 @@ export default function HistoryScreen() {
   const handleClearHistory = () => {
     Alert.alert(
       'Clear History', 
-      'Are you sure you want to clear your scan history?',
+      'Are you sure you want to clear your scan history? This action cannot be undone.',
       [
         { 
           text: 'Cancel', 
@@ -160,9 +193,19 @@ export default function HistoryScreen() {
         { 
           text: 'Clear', 
           style: 'destructive',
-          onPress: () => {
-            // TODO: Implement clear history functionality
-            Alert.alert('Not Implemented', 'Clear history feature coming soon.');
+          onPress: async () => {
+            try {
+              // Clear both local and backend history
+              useHistoryStore.getState().clear(); // Clear local history
+              await clearScanHistory(); // Clear backend history
+              
+              // Refresh the view
+              await fetchHistory(true);
+              Alert.alert('Success', 'Scan history cleared successfully.');
+            } catch (error) {
+              console.error('Failed to clear scan history:', error);
+              Alert.alert('Error', 'Failed to clear scan history. Please try again.');
+            }
           } 
         }
       ]
@@ -170,16 +213,22 @@ export default function HistoryScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" />
-      <View style={styles.container}>
-      <HeaderBar 
-        title="Scan History" 
-        rightAction={{
-          icon: 'trash',
-          onPress: handleClearHistory
-        }} 
-      />
+    <FullScreenWrapper>
+      <LinearGradient colors={['#FAEAB1', '#EBC46C']} style={styles.container}>
+        <View style={styles.headerSection}>
+          <View style={styles.headerContainer}>
+            <Text style={styles.heading}>Scan History</Text>
+          </View>
+          <View style={styles.clearButtonContainer}>
+            <TouchableOpacity 
+              style={styles.clearButton}
+              onPress={handleClearHistory}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.clearButtonText}>🗑 Clear</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       {combinedHistory.length === 0 && !loading ? (
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyText}>No scan history yet</Text>
@@ -195,6 +244,7 @@ export default function HistoryScreen() {
           data={combinedHistory}
           renderItem={renderHistoryItem}
           keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.flatListContent}
           onEndReached={() => {
             if (backendHistory.length < totalScans) {
               fetchHistory();
@@ -206,28 +256,92 @@ export default function HistoryScreen() {
           onRefresh={() => fetchHistory(true)}
         />
       )}
-      </View>
-    </SafeAreaView>
+      </LinearGradient>
+    </FullScreenWrapper>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: colors.bg },
   container: { 
-    flex: 1, 
-    backgroundColor: 'white' 
+    flex: 1,
+  },
+  headerSection: {
+    paddingHorizontal: 20,
+    marginBottom: 16,
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  heading: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#8B4513',
+    textAlign: 'center',
+  },
+  clearButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+  },
+  clearButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: 'rgba(139, 69, 19, 0.15)',
+    borderRadius: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 100,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  clearButtonText: {
+    color: '#8B4513',
+    fontWeight: '500',
+    fontSize: 16,
+    letterSpacing: 0.5,
+  },
+  flatListContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 100, // Space for tab bar
   },
   historyItem: {
     flexDirection: 'row',
     padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0'
+    backgroundColor: '#FFFFFF',
+    marginBottom: 12,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#F5DEB3',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 2,
   },
   historyImage: {
     width: 80,
     height: 80,
-    borderRadius: radii.pill,
+    borderRadius: 12,
     marginRight: 16
+  },
+  historyImagePlaceholder: {
+    width: 80,
+    height: 80,
+    borderRadius: 12,
+    marginRight: 16,
+    backgroundColor: '#F5DEB3',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  historyEmoji: {
+    fontSize: 40,
+    textAlign: 'center',
   },
   historyDetails: {
     flex: 1,
@@ -236,14 +350,16 @@ const styles = StyleSheet.create({
   materialLabel: {
     fontSize: 18,
     fontWeight: '700',
-    marginBottom: 4
+    marginBottom: 4,
+    color: '#8B4513',
   },
   confidence: {
-    color: colors.text.secondary,
-    marginBottom: 4
+    color: '#8B7355',
+    marginBottom: 4,
+    fontSize: 14,
   },
   timestamp: {
-    color: colors.text.secondary,
+    color: '#8B7355',
     fontSize: 12
   },
   loadingContainer: {
@@ -258,17 +374,18 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 18,
-    color: colors.text.secondary,
-    marginBottom: 16
+    color: '#8B4513',
+    marginBottom: 16,
+    textAlign: 'center'
   },
   startScanButton: {
-    backgroundColor: colors.bg,
+    backgroundColor: '#8B4513',
     paddingVertical: 12,
     paddingHorizontal: 24,
-    borderRadius: radii.pill
+    borderRadius: 20,
   },
   startScanButtonText: {
-    color: 'white',
+    color: '#FFE4C8',
     fontWeight: '700'
   }
 });

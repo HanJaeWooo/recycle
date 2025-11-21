@@ -4,7 +4,7 @@ export type RootStackParamList = {
   SignIn: undefined;
   SignUp: undefined;
   ForgotPassword: undefined;
-  ResetPassword: undefined;
+  ResetPassword: { token?: string } | undefined;
   Main: undefined; // Bottom tabs
   IdeaDetail: { id: string };
   Guides: undefined;
@@ -13,6 +13,7 @@ export type RootStackParamList = {
   AllMaterials: undefined;
   YouTubeVideoList: { material: string; projectTitle?: string };
   ProjectHistory: undefined;
+  AboutUs: undefined;
 };
 
 export type TabParamList = {

@@ -22,11 +22,8 @@ export default function ForgotPasswordScreen() {
     try {
       setSubmitting(true);
       const res = await requestPasswordReset(email);
-      if (res?.token) {
-        setInfo(`Reset token (dev only): ${res.token}`);
-      } else {
-        setInfo('If this email exists, a reset link was sent.');
-      }
+      // Always show success message without revealing token
+      setInfo('If this email exists, a password reset link has been sent. Please check your inbox and spam folder.');
     } catch {
       setError('Request failed, try again.');
     } finally {

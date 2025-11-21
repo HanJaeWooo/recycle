@@ -8,6 +8,7 @@ import {
   Pressable,
   ActivityIndicator,
   Linking,
+  Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { searchYouTubeVideos, YouTubeVideo } from '@/services/youtubeApi';
@@ -15,6 +16,7 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import YouTubePlayerWrapper from '@/components/YouTubePlayer';
 import { getIdeasForMaterial } from '@/services/ideas';
+import { useProjectStore } from '@/store/useProjectStore';
 
 export default function YouTubeVideoListScreen() {
   const route = useRoute<any>();
@@ -30,6 +32,22 @@ export default function YouTubeVideoListScreen() {
   // Get project details
   const ideas = getIdeasForMaterial(material.toLowerCase());
   const projectIdea = ideas.find(idea => idea.title === projectTitle) || ideas[0];
+  
+  // Project completion tracking - track per VIDEO, not per project
+  const markAsComplete = useProjectStore((s) => s.markAsComplete);
+  const isProjectCompleted = useProjectStore((s) => s.isProjectCompleted);
+  const [isCompleted, setIsCompleted] = useState(false);
+
+  // Check if CURRENT VIDEO is completed (not just the project)
+  useEffect(() => {
+    const activeVideo = videos[currentVideoIndex];
+    if (projectIdea && activeVideo) {
+      // Create unique ID for this specific video tutorial
+      const videoSpecificId = `${projectIdea.id}-${activeVideo.videoId}`;
+      setIsCompleted(isProjectCompleted(videoSpecificId));
+      console.log('📹 Checking completion for video:', activeVideo.title, 'ID:', videoSpecificId, 'Completed:', isProjectCompleted(videoSpecificId));
+    }
+  }, [projectIdea, videos, currentVideoIndex, isProjectCompleted]);
 
   useEffect(() => {
     loadYouTubeVideos();
@@ -69,6 +87,75 @@ export default function YouTubeVideoListScreen() {
   const handleOpenInYouTube = (videoId: string) => {
     const url = `https://www.youtube.com/watch?v=${videoId}`;
     Linking.openURL(url);
+  };
+
+  const handleMarkAsDone = async () => {
+    if (!projectIdea || !currentVideo) return;
+    
+    console.log('🔥 Mark as Done clicked! Video:', currentVideo.title, 'Completed:', isCompleted);
+    console.log('✅ Button press registered!');
+    
+    if (isCompleted) {
+      console.log('⚠️ This video already completed');
+      Alert.alert('Already Completed', 'This video tutorial has already been marked as done!');
+      return;
+    }
+
+    console.log('🚀 Marking YouTube video as complete...');
+    
+    try {
+      // Create unique ID for this specific video tutorial
+      const videoSpecificId = `${projectIdea.id}-${currentVideo.videoId}`;
+      const videoTitle = `${projectIdea.title} - ${currentVideo.title.substring(0, 50)}`;
+      
+      console.log('📤 Calling markAsComplete with:', {
+        projectId: videoSpecificId,
+        projectTitle: videoTitle,
+        material: material,
+        videoId: currentVideo.videoId,
+      });
+      
+      await markAsComplete({
+        projectId: videoSpecificId,
+        projectTitle: videoTitle,
+        material: material,
+        image: projectIdea.image, // Use project's original image, not YouTube thumbnail
+        videoPath: `https://youtube.com/watch?v=${currentVideo.videoId}`,
+      });
+      
+      console.log('✅ markAsComplete returned successfully');
+      setIsCompleted(true);
+      console.log('✅ setIsCompleted(true) called');
+      
+      // Give state time to update
+      setTimeout(() => {
+        const currentProjects = useProjectStore.getState().completedProjects;
+        console.log('📊 Current completed projects count:', currentProjects.length);
+        currentProjects.forEach(p => console.log('  - ', p.projectTitle));
+      }, 100);
+      
+      Alert.alert(
+        '✅ Success!', 
+        `Video tutorial marked as completed!\n\nView in: Settings → Finished Projects`,
+        [
+          { text: 'OK', onPress: () => console.log('Success dialog dismissed') },
+          { 
+            text: 'View Projects', 
+            onPress: () => {
+              console.log('🔄 Navigating to ProjectHistory');
+              navigation.navigate('ProjectHistory' as never);
+            }
+          }
+        ]
+      );
+    } catch (error) {
+      console.error('❌ Error marking video as complete:', error);
+      console.error('❌ Error stack:', error instanceof Error ? error.stack : 'No stack');
+      Alert.alert(
+        'Error', 
+        `Failed to mark video as done.\n\nError: ${error instanceof Error ? error.message : String(error)}\n\nCheck console for details.`
+      );
+    }
   };
 
   const currentVideo = videos[currentVideoIndex];
@@ -123,7 +210,10 @@ export default function YouTubeVideoListScreen() {
         <View style={{ width: 24 }} />
       </View>
 
-      <ScrollView style={styles.scrollView}>
+      <ScrollView 
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+      >
         {/* Steps Section */}
         {projectIdea?.steps && projectIdea.steps.length > 0 && (
           <View style={styles.stepsCard}>
@@ -155,6 +245,29 @@ export default function YouTubeVideoListScreen() {
             </View>
           )}
         </View>
+
+        {/* Mark as Done Button */}
+        {projectIdea && (
+          <Pressable 
+            style={({ pressed }) => [
+              styles.markDoneButton, 
+              isCompleted && styles.markDoneButtonCompleted,
+              pressed && !isCompleted && styles.markDoneButtonPressed
+            ]}
+            onPress={handleMarkAsDone}
+            disabled={isCompleted}
+            android_ripple={{ color: 'rgba(255,255,255,0.3)' }}
+          >
+            <Ionicons 
+              name={isCompleted ? "checkmark-circle" : "checkbox-outline"} 
+              size={24} 
+              color="white" 
+            />
+            <Text style={styles.markDoneButtonText}>
+              {isCompleted ? 'Completed ✓' : 'Mark as Done'}
+            </Text>
+          </Pressable>
+        )}
 
         {/* More Tutorials Section */}
         <View style={styles.moreTutorialsSection}>
@@ -223,6 +336,9 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 100, // Space for tab bar
   },
   stepsCard: {
     backgroundColor: '#FFF8DC',
@@ -380,5 +496,34 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
+  },
+  markDoneButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#10b981',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    marginHorizontal: 20,
+    marginTop: 20,
+    gap: 8,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+  },
+  markDoneButtonCompleted: {
+    backgroundColor: '#6b7280',
+  },
+  markDoneButtonPressed: {
+    backgroundColor: '#059669',
+    transform: [{ scale: 0.98 }],
+  },
+  markDoneButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '700',
   },
 });

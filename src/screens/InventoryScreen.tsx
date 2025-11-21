@@ -1,4 +1,6 @@
-import { View, Text, StyleSheet, FlatList, Image, Pressable, Platform, SafeAreaView, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Image, Pressable, Platform, StatusBar } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { radii } from '@/utils/theme';
 import { useHistoryStore } from '@/store/useHistoryStore';
 import { useEffect } from 'react';
@@ -23,8 +25,8 @@ export default function InventoryScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" />
-      <View style={styles.container}>
-      <View style={styles.mainCard}>
+      <LinearGradient colors={['#FAEAB1', '#EBC46C']} style={styles.container}>
+        <View style={styles.mainCard}>
         <View style={styles.headerRow}>
           <Text style={styles.header}>Material Box ({items.length})</Text>
         </View>
@@ -59,61 +61,105 @@ export default function InventoryScreen() {
           <Text style={styles.bigCtaText}>📷  Scan Your Materials Now</Text>
         </Pressable>
       </View>
-      </View>
+      </LinearGradient>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#F2E0AE' },
-  container: { 
+  safeArea: { 
     flex: 1, 
-    backgroundColor: '#F2E0AE', 
-    padding: 16,
-    paddingBottom: Platform.OS === 'ios' ? 40 : 80, // ensure buttons visible above nav bar
+    backgroundColor: '#FAEAB1' 
+  },
+  container: { 
+    flex: 1,
+    padding: 20,
   },
   mainCard: {
     flex: 1,
     backgroundColor: 'white',
-    borderRadius: 24,
+    marginHorizontal: 20,
+    borderRadius: 16,
     padding: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 6,
+    shadowRadius: 8,
+    elevation: 4,
     marginBottom: 16,
+    borderWidth: 2,
+    borderColor: '#F5DEB3',
   },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  header: { fontWeight: '800', fontSize: 18, color: '#111827' },
+  headerRow: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    marginBottom: 12 
+  },
+  header: { 
+    fontWeight: '800', 
+    fontSize: 18, 
+    color: '#8B4513' 
+  },
   card: { 
-    backgroundColor: '#F9FAFB', 
-    borderRadius: radii.l, 
+    backgroundColor: '#F5DEB3', 
+    borderRadius: 12, 
     padding: 12,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: '#EBC46C',
   },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  thumb: { width: 54, height: 40, borderRadius: 8 },
-  labelContainer: { flex: 1 },
-  label: { fontWeight: '700', fontSize: 15, color: '#111827' },
+  row: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: 12 
+  },
+  thumb: { 
+    width: 54, 
+    height: 40, 
+    borderRadius: 8,
+    backgroundColor: '#FFFFFF',
+  },
+  labelContainer: { 
+    flex: 1 
+  },
+  label: { 
+    fontWeight: '700', 
+    fontSize: 15, 
+    color: '#8B4513' 
+  },
   quantityDisplay: {
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#FFFFFF',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#EBC46C',
   },
   quantityText: {
     fontWeight: '700',
     fontSize: 14,
-    color: '#4B5563',
+    color: '#8B7355',
   },
   bottomActions: {
     gap: 12,
-    paddingBottom: 12,
+    paddingHorizontal: 20,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 80,
   },
   bigCta: { 
-    backgroundColor: '#111', borderRadius: radii.l, padding: 16, alignItems: 'center'
+    backgroundColor: '#8B4513', 
+    borderRadius: 20, 
+    padding: 16, 
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  bigCtaText: { color: 'white', fontWeight: '700', fontSize: 15, textAlign: 'center' },
+  bigCtaText: { 
+    color: '#FFE4C8', 
+    fontWeight: '700', 
+    fontSize: 15, 
+    textAlign: 'center' 
+  },
 });

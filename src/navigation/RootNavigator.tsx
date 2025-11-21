@@ -14,6 +14,7 @@ import MaterialGuideScreen from '@/screens/MaterialGuideScreen';
 import AllMaterialsScreen from '@/screens/AllMaterialsScreen';
 import YouTubeVideoListScreen from '@/screens/YouTubeVideoListScreen';
 import ProjectHistoryScreen from '@/screens/ProjectHistoryScreen';
+import AboutUsScreen from '@/screens/AboutUsScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -45,6 +46,7 @@ export default function RootNavigator() {
       
       {/* Project History screen */}
       <Stack.Screen name="ProjectHistory" component={ProjectHistoryScreen} />
+      <Stack.Screen name="AboutUs" component={AboutUsScreen} />
     </Stack.Navigator>
   );
 }

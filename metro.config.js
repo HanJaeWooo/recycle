@@ -1,4 +1,5 @@
 const { getDefaultConfig } = require('expo/metro-config');
+const fs = require('fs');
 const path = require('path');
 
 const config = getDefaultConfig(__dirname);
@@ -23,11 +24,16 @@ config.transformer = {
   }),
 };
 
-// Add public folder to watch folders for web
-config.watchFolders = [
-  path.resolve(__dirname, 'public'),
-  ...config.watchFolders || [],
-];
+const publicDir = path.resolve(__dirname, 'public');
+const hasPublicDir = fs.existsSync(publicDir);
+
+// Add public folder to watch folders for web (when available)
+if (hasPublicDir) {
+  config.watchFolders = [
+    publicDir,
+    ...(config.watchFolders || []),
+  ];
+}
 
 // Serve public folder as static assets
 config.server = {
@@ -35,9 +41,8 @@ config.server = {
   enhanceMiddleware: (middleware, metroServer) => {
     return (req, res, next) => {
       // Serve files from public folder (videos and thumbnails)
-      if (req.url.startsWith('/videos/')) {
-        const filePath = path.join(__dirname, 'public', req.url);
-        const fs = require('fs');
+      if (hasPublicDir && req.url.startsWith('/videos/')) {
+        const filePath = path.join(publicDir, req.url);
         if (fs.existsSync(filePath)) {
           // Set appropriate content type based on file extension
           const ext = path.extname(filePath).toLowerCase();

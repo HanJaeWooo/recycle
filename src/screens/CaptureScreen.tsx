@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, ActivityIndicator, Image, ImageBackground, Alert, Modal, ScrollView, SafeAreaView, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ActivityIndicator, Image, ImageBackground, Alert, Modal, ScrollView, StatusBar } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
@@ -228,7 +229,8 @@ export default function CaptureScreen() {
       <StatusBar barStyle="light-content" />
       <View style={styles.container}>
       {!photoUri ? (
-        <CameraView style={styles.camera} ref={(ref) => { cameraRef.current = ref; }}>
+        <View style={styles.cameraContainer}>
+          <CameraView style={styles.camera} ref={(ref) => { cameraRef.current = ref; }} />
           <Pressable 
             style={styles.backButton} 
             onPress={() => navigation.goBack()}
@@ -236,15 +238,13 @@ export default function CaptureScreen() {
             <Ionicons name="arrow-back" size={28} color="#FFFFFF" />
           </Pressable>
           {result && bbox ? (
-            <>
-              <View style={[styles.detectBox, { left: `${bbox.x * 100}%`, top: `${bbox.y * 100}%`, width: `${bbox.width * 100}%`, height: `${bbox.height * 100}%` }]}>
-                <View style={styles.detectLabel}>
-                  <Text style={styles.detectLabelText}>{result} ({Math.round((confidence ?? 0) * 100)}%)</Text>
-                </View>
+            <View style={[styles.detectBox, { left: `${bbox.x * 100}%`, top: `${bbox.y * 100}%`, width: `${bbox.width * 100}%`, height: `${bbox.height * 100}%` }]}>
+              <View style={styles.detectLabel}>
+                <Text style={styles.detectLabelText}>{result} ({Math.round((confidence ?? 0) * 100)}%)</Text>
               </View>
-            </>
+            </View>
           ) : null}
-        </CameraView>
+        </View>
       ) : (
         <View style={styles.previewContainer}>
           <Image source={{ uri: photoUri }} style={styles.preview} resizeMode="cover" />
@@ -309,7 +309,8 @@ export default function CaptureScreen() {
                 style={styles.upcyclingButton}
                 onPress={() => {
                   const guide = mapLabelToGuide(result ?? 'Other');
-                  navigation.navigate('YouTubeVideoList', { material: guide.category });
+                  console.log('🎨 Navigating to Library with material:', guide.key);
+                  navigation.navigate('Library' as never, { material: guide.key } as never);
                 }}
               >
                 <Text style={styles.upcyclingButtonText}>Upcycling Ideas</Text>
@@ -410,6 +411,7 @@ export default function CaptureScreen() {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: 'black' },
   container: { flex: 1, backgroundColor: 'black' },
+  cameraContainer: { flex: 1, position: 'relative' },
   backButton: {
     position: 'absolute',
     top: 20,

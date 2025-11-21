@@ -1,16 +1,26 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, Pressable } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { colors, radii } from '@/utils/theme';
 import { consumePasswordReset } from '@/services/auth.api';
 
 export default function ResetPasswordScreen() {
   const navigation = useNavigation();
+  const route = useRoute();
   const [token, setToken] = useState('');
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ok, setOk] = useState<boolean>(false);
+
+  // Auto-fill token from URL params if present
+  useEffect(() => {
+    const params = route.params as any;
+    if (params?.token) {
+      setToken(params.token);
+      console.log('🔑 Token from URL:', params.token);
+    }
+  }, [route.params]);
 
   const onSubmit = async () => {
     if (submitting) return;
@@ -35,10 +45,19 @@ export default function ResetPasswordScreen() {
     }
   };
 
+  // Check if token came from URL params (auto-filled)
+  const tokenFromUrl = !!(route.params as any)?.token;
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Reset password</Text>
-      <TextInput placeholder="Token" autoCapitalize="none" style={styles.input} value={token} onChangeText={setToken} />
+      {tokenFromUrl ? (
+        <Text style={{ color: '#16a34a', textAlign: 'center', marginBottom: 10 }}>
+          ✓ Token verified from email link
+        </Text>
+      ) : (
+        <TextInput placeholder="Token" autoCapitalize="none" style={styles.input} value={token} onChangeText={setToken} />
+      )}
       <TextInput placeholder="New password" secureTextEntry style={styles.input} value={password} onChangeText={setPassword} />
       {error ? <Text style={{ color: '#ef4444' }}>{error}</Text> : null}
       {ok ? <Text style={{ color: '#16a34a' }}>Password updated. You can sign in now.</Text> : null}

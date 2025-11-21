@@ -1,7 +1,7 @@
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView, Platform } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
-import HeaderBar from '@/components/HeaderBar';
-import { colors } from '@/utils/theme';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const rows = [
   { 
@@ -82,46 +82,92 @@ export default function GuidesScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <HeaderBar title="Guides" />
-      <Text style={styles.heading}>Guides</Text>
-      {rows.map((r, index) => (
-        <Pressable key={r.title} style={styles.row} onPress={() => handlePress(index)}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.rowTitle}>{r.title}</Text>
-            <Text style={styles.desc}>{r.desc}</Text>
-            {expandedIndex === index && (
-              <Text style={styles.content}>{r.content}</Text>
-            )}
-          </View>
-          <Text style={styles.arrow}>
-            {expandedIndex === index ? '⌃' : '⌄'}
-          </Text>
-        </Pressable>
-      ))}
-    </View>
+    <SafeAreaView style={styles.safeArea}>
+      <LinearGradient colors={['#FAEAB1', '#EBC46C']} style={styles.container}>
+        <ScrollView 
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}>
+        <Text style={styles.heading}>Guides</Text>
+        {rows.map((r, index) => (
+          <Pressable key={r.title} style={styles.row} onPress={() => handlePress(index)}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.rowTitle}>{r.title}</Text>
+              <Text style={styles.desc}>{r.desc}</Text>
+              {expandedIndex === index && (
+                <Text style={styles.content}>{r.content}</Text>
+              )}
+            </View>
+            <Text style={styles.arrow}>
+              {expandedIndex === index ? '⌃' : '⌄'}
+            </Text>
+          </Pressable>
+        ))}
+      </ScrollView>
+      </LinearGradient>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: 'white', padding: 16 },
-  heading: { fontSize: 24, fontWeight: '800', alignSelf: 'center', marginVertical: 10 },
-  row: { flexDirection: 'row', alignItems: 'flex-start', paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#eee' },
-  rowTitle: { fontWeight: '700' },
-  desc: { color: '#6b7280', marginTop: 4 },
+  safeArea: { 
+    flex: 1, 
+    backgroundColor: '#FAEAB1' 
+  },
+  container: {
+    flex: 1,
+    paddingTop: 20,
+  },
+
+  scrollContent: {
+    padding: 20,
+    paddingBottom: Platform.OS === 'ios' ? 120 : 90,
+  },
+  heading: { 
+    fontSize: 32, 
+    fontWeight: '800', 
+    color: '#8B4513',
+    marginBottom: 24,
+    textAlign: 'center',
+    marginTop: 12,
+  },
+  row: { 
+    flexDirection: 'row', 
+    alignItems: 'flex-start', 
+    backgroundColor: '#FFFFFF',
+    marginBottom: 12,
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 2,
+    borderColor: '#F5DEB3',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  rowTitle: { 
+    fontWeight: '700',
+    color: '#8B4513',
+    fontSize: 16,
+  },
+  desc: { 
+    color: '#8B7355', 
+    marginTop: 4,
+  },
   content: { 
-    color: '#374151', 
+    color: '#1e293b', 
     marginTop: 12, 
     lineHeight: 20, 
     fontSize: 14,
-    backgroundColor: '#f9fafb',
+    backgroundColor: '#F5DEB3',
     padding: 12,
-    borderRadius: 8
+    borderRadius: 8,
   },
   arrow: {
     fontSize: 16,
-    color: '#6b7280',
-    marginLeft: 8
+    color: '#8B7355',
+    marginLeft: 8,
+    fontWeight: '700',
   }
 });
 

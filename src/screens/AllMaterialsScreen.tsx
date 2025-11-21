@@ -1,5 +1,5 @@
 import { useNavigation, CommonActions } from '@react-navigation/native';
-import { View, Text, Pressable, StyleSheet, FlatList, StatusBar } from 'react-native';
+import { View, Text, Pressable, StyleSheet, FlatList } from 'react-native';
 import { CompositeNavigationProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
@@ -13,23 +13,21 @@ type AllMaterialsScreenNavigationProp = CompositeNavigationProp<
 >;
 
 const allCategories = [
-  { id: 'plastic', title: 'Plastic', emoji: '♻️', borderColor: '#60A5FA' },
-  { id: 'metal', title: 'Metal', emoji: '🔩', borderColor: '#C084FC' },
-  { id: 'cardboard', title: 'Cardboard', emoji: '📦', borderColor: '#FBBF24' },
-  { id: 'wood', title: 'Wood', emoji: '🪵', borderColor: '#92400E' },
-  { id: 'textile', title: 'Organic', emoji: '🍎', borderColor: '#4ADE80' },
-  { id: 'hangers', title: 'Hangers', emoji: '👗', borderColor: '#F59E0B' },
-  { id: 'utensils', title: 'Utensils', emoji: '🔪', borderColor: '#EF4444' },
-  { id: 'bottlecaps', title: 'Cups', emoji: '🥤', borderColor: '#FB923C' },
+  { id: 'plastic', title: 'Plastic', emoji: 'bottle-soda', borderColor: '#60A5FA', useIcon: true },
+  { id: 'metal', title: 'Metal', emoji: '🔩', borderColor: '#C084FC', useIcon: false },
+  { id: 'cardboard', title: 'Cardboard', emoji: '📦', borderColor: '#FBBF24', useIcon: false },
+  { id: 'wood', title: 'Wood', emoji: '🪵', borderColor: '#92400E', useIcon: false },
+  { id: 'textile', title: 'Fabric', emoji: '🧵', borderColor: '#4ADE80', useIcon: false },
+  { id: 'hangers', title: 'Hangers', emoji: 'hanger', borderColor: '#F59E0B', useIcon: true },
+  { id: 'utensils', title: 'Utensils', emoji: 'silverware-fork-knife', borderColor: '#EF4444', useIcon: true },
+  { id: 'cups', title: 'Cups', emoji: '🥤', borderColor: '#FB923C', useIcon: false },
 ];
 
 export default function AllMaterialsScreen() {
   const navigation = useNavigation<AllMaterialsScreenNavigationProp>();
 
   return (
-    <>
-      <StatusBar hidden={true} />
-      <LinearGradient colors={['#FAEAB1', '#EBC46C']} style={styles.container}>
+    <LinearGradient colors={['#FAEAB1', '#EBC46C']} style={styles.container}>
         {/* --- Header --- */}
         <View style={styles.header}>
           <Pressable onPress={() => navigation.goBack()} style={styles.backBtn}>
@@ -75,14 +73,17 @@ export default function AllMaterialsScreen() {
               }}
             >
               <View style={styles.cardContent}>
-                <Text style={styles.emoji}>{item.emoji}</Text>
+                {item.useIcon ? (
+                  <MaterialCommunityIcons name={item.emoji as any} size={36} color="#1e293b" />
+                ) : (
+                  <Text style={styles.emoji}>{item.emoji}</Text>
+                )}
                 <Text style={styles.cardTitle}>{item.title}</Text>
               </View>
             </Pressable>
           )}
         />
       </LinearGradient>
-    </>
   );
 }
 
@@ -120,7 +121,7 @@ const styles = StyleSheet.create({
   },
   grid: {
     gap: 12,
-    paddingBottom: 20,
+    paddingBottom: 100, // Extra space for tab bar
   },
   card: {
     flex: 1,

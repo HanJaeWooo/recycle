@@ -102,7 +102,7 @@ export default function IdeaDetailScreen() {
         projectId: item.id,
         projectTitle: item.title,
         material: item.material,
-        image: item.image,
+        image: undefined, // Don't save image - use emoji icon instead
         videoPath: videoData?.videoPath,
       });
       
@@ -252,7 +252,7 @@ export default function IdeaDetailScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
-  scrollContent: { padding: 14, paddingBottom: 30 },
+  scrollContent: { padding: 14, paddingBottom: 100 }, // Extra space for tab bar
   backButton: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -1,7 +1,9 @@
-import { View, Text, StyleSheet, FlatList, Pressable, SafeAreaView, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, FlatList, StatusBar, Platform } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { colors, radii } from '@/utils/theme';
 import { getGuideByKey, mapLabelToGuide, MaterialGuide } from '@/services/materials';
+import HeaderBar from '@/components/HeaderBar';
 
 export default function MaterialGuideScreen() {
   const route = useRoute<any>();
@@ -10,32 +12,31 @@ export default function MaterialGuideScreen() {
   const guide: MaterialGuide = getGuideByKey(materialKey) ?? mapLabelToGuide(materialKey);
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={colors.bg} />
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="dark-content" />
+      <HeaderBar title={guide.title} />
       
-      {/* Top Bar */}
-      <View style={styles.topBar}>
-        <Pressable style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Text style={styles.backText}>←</Text>
-        </Pressable>
-        <Text style={styles.title}>{guide.title}</Text>
-      </View>
-
-      {/* Meta Info */}
-      <View style={styles.metaCard}>
-        <View style={styles.metaRow}>
-          <Text style={styles.metaLabel}>Category:</Text>
-          <Text style={styles.metaValue}>{guide.category}</Text>
-        </View>
-        <View style={styles.metaRow}>
-          <Text style={styles.metaLabel}>Bin:</Text>
-          <Text style={styles.metaBin}>{guide.bin}</Text>
-        </View>
-      </View>
-
-      {/* Tips Section */}
-      <Text style={styles.section}>Disposal & Cleaning Tips</Text>
       <FlatList
+        style={styles.container}
+        contentContainerStyle={styles.content}
+        ListHeaderComponent={() => (
+          <>
+            {/* Meta Info */}
+            <View style={styles.metaCard}>
+              <View style={styles.metaRow}>
+                <Text style={styles.metaLabel}>Category:</Text>
+                <Text style={styles.metaValue}>{guide.category}</Text>
+              </View>
+              <View style={styles.metaRow}>
+                <Text style={styles.metaLabel}>Bin:</Text>
+                <Text style={styles.metaBin}>{guide.bin}</Text>
+              </View>
+            </View>
+
+            {/* Tips Section */}
+            <Text style={styles.section}>Disposal & Cleaning Tips</Text>
+          </>
+        )}
         data={guide.tips}
         keyExtractor={(t, i) => `${guide.key}-${i}`}
         ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
@@ -45,35 +46,29 @@ export default function MaterialGuideScreen() {
             <Text style={styles.tip}>{item}</Text>
           </View>
         )}
-        contentContainerStyle={{ paddingBottom: 20 }}
       />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: 16 },
-  
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 16,
-    marginBottom: 24,
+  safeArea: {
+    flex: 1,
+    backgroundColor: colors.bg
   },
-  backButton: {
-    padding: 6,
-    marginRight: 12,
-    borderRadius: radii.sm,
-    backgroundColor: '#F3F4F6',
+  container: {
+    flex: 1,
+    backgroundColor: colors.bg,
   },
-  backText: { fontSize: 18, fontWeight: '700', color: '#1F2937' },
-
-  title: { fontSize: 22, fontWeight: '900', color: '#111827', flexShrink: 1 },
+  content: {
+    padding: 16,
+    paddingBottom: Platform.OS === 'ios' ? 120 : 90, // Extra padding for navigation bar
+  },
 
   metaCard: {
     backgroundColor: '#F9FAFB',
     padding: 16,
-    borderRadius: radii.md,
+    borderRadius: radii.m,
     marginBottom: 20,
     shadowColor: '#000',
     shadowOpacity: 0.05,

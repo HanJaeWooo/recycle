@@ -1,5 +1,5 @@
 import { useRoute, useNavigation } from '@react-navigation/native';
-import { View, Text, StyleSheet, FlatList, Pressable, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { RootStackParamList, TabParamList } from '@/navigation/types';
@@ -26,9 +26,7 @@ export default function LibraryScreen() {
   const hasLocalVideos = localVideos.length > 0;
 
   return (
-    <>
-      <StatusBar hidden={true} />
-      <LinearGradient colors={['#FAEAB1', '#EBC46C']} style={styles.container}>
+    <LinearGradient colors={['#FAEAB1', '#EBC46C']} style={styles.container}>
         {/* --- Header --- */}
         <View style={styles.header}>
           <Pressable onPress={() => navigation.goBack()} style={styles.backBtn}>
@@ -97,7 +95,6 @@ export default function LibraryScreen() {
           }
         />
       </LinearGradient>
-    </>
   );
 }
 
@@ -125,7 +122,7 @@ const styles = StyleSheet.create({
   },
   list: {
     paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingBottom: 100, // Space for tab bar
   },
   card: {
     backgroundColor: '#FFF8DC',

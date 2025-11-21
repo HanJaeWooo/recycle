@@ -1,4 +1,5 @@
-import { View, Text, StyleSheet, TextInput, Pressable, Alert, SafeAreaView, StatusBar, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TextInput, Pressable, Alert, StatusBar, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radii } from '@/utils/theme';

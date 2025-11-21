@@ -26,11 +26,11 @@ export async function getLocalIpAddress() {
   }
   
   // For production builds or when not in development
-  return 'recycle-production.up.railway.app';
+  return 'recyclenew-production.up.railway.app';
 }
 
 export async function getApiBaseUrl() {
-  const baseUrl = process.env.EXPO_PUBLIC_API_BASE || 'https://recycle-production.up.railway.app';
+  const baseUrl = process.env.EXPO_PUBLIC_API_BASE || 'https://recyclenew-production.up.railway.app';
   return baseUrl;
 }
 
@@ -64,5 +64,5 @@ export async function getDetectionApiUrl() {
   }
   
   // In production, use the production URL
-  return process.env.EXPO_PUBLIC_DETECTION_API_URL || 'https://recycle-production.up.railway.app';
+  return process.env.EXPO_PUBLIC_DETECTION_API_URL || 'https://recyclenew-production.up.railway.app';
 }
