@@ -19,6 +19,18 @@ from torch.nn.modules.container import Sequential
 import torch
 import numpy as np
 
+# Force torch.load to default to weights_only=True so training-only objects
+# like DFLoss are ignored when loading YOLO checkpoints.
+_original_torch_load = torch.load
+
+
+def safe_torch_load(*args, **kwargs):
+    kwargs.setdefault("weights_only", True)
+    return _original_torch_load(*args, **kwargs)
+
+
+torch.load = safe_torch_load
+
 app = FastAPI(title="Recycling Detection API")
 
 # Enable CORS for your React Native app
@@ -32,18 +44,6 @@ app.add_middleware(
 
 # Load your trained YOLO model
 import os
-os.environ.setdefault("TORCH_LOAD_WEIGHTS_ONLY", "0")
-torch.serialization.add_safe_globals([
-    DetectionModel,
-    Sequential,
-    yolo_conv.Conv,
-    yolo_block.C2f,
-    yolo_block.Bottleneck,
-    Conv2d,
-    BatchNorm2d,
-    SiLU,
-    ModuleList,
-])
 try:
     # Get the directory where this script is located
     script_dir = os.path.dirname(os.path.abspath(__file__))
