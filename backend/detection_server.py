@@ -10,7 +10,7 @@ from ultralytics import YOLO
 from ultralytics.nn.tasks import DetectionModel
 from ultralytics.nn.modules import conv as yolo_conv
 from ultralytics.nn.modules import block as yolo_block
-from torch.nn import Conv2d, BatchNorm2d
+from torch.nn import Conv2d, BatchNorm2d, SiLU
 from torch.nn.modules.container import Sequential
 import torch
 import numpy as np
@@ -35,7 +35,8 @@ torch.serialization.add_safe_globals([
     yolo_conv.Conv,
     yolo_block.C2f,
     Conv2d,
-    BatchNorm2d
+    BatchNorm2d,
+    SiLU
 ])
 try:
     # Get the directory where this script is located
