@@ -40,8 +40,7 @@ try:
     
     model = YOLO(
         model_path,
-        task="detect",
-        weights_only=True  # Skip loading DFLoss to avoid compatibility issues
+        task="detect"
     )
     print("✅ YOLO model loaded successfully")
     print(f"📊 Model classes: {list(model.names.values())}")
