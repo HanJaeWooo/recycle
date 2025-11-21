@@ -8,6 +8,7 @@ from PIL import Image
 import uvicorn
 from ultralytics import YOLO
 from ultralytics.nn.tasks import DetectionModel
+from ultralytics.nn.modules import conv as yolo_conv
 from torch.nn.modules.container import Sequential
 import torch
 import numpy as np
@@ -26,7 +27,11 @@ app.add_middleware(
 # Load your trained YOLO model
 import os
 os.environ.setdefault("TORCH_LOAD_WEIGHTS_ONLY", "0")
-torch.serialization.add_safe_globals([DetectionModel, Sequential])
+torch.serialization.add_safe_globals([
+    DetectionModel,
+    Sequential,
+    yolo_conv.Conv
+])
 try:
     # Get the directory where this script is located
     script_dir = os.path.dirname(os.path.abspath(__file__))
